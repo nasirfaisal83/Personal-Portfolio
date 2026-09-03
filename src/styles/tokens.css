@@ -1,0 +1,60 @@
+/* Design tokens — design §2. Everything visual on the page resolves to one of these. */
+
+:root {
+  /* §2.1 Color */
+  --vellum: #eceff3;
+  --ink: #14202e;
+  --graphite: #5b6675;
+  --hairline: #d4dae2;
+  --screen: #0f1b2d;
+  --screen-ink: #e6edf3;
+  --screen-muted: #7a8ba0;
+  --signal: #35d0c8;
+  --signal-deep: #0b6e68;
+  --fault: #ff6b6b;
+
+  /* Derived, never used as text on vellum. */
+  --screen-ring: rgba(255, 255, 255, 0.04);
+  --screen-grid: rgba(122, 139, 160, 0.06);
+
+  /* §2.2 Type */
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  --font-sans:
+    var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-arabic: var(--font-plex-arabic), var(--font-sans);
+  --font-hebrew: var(--font-plex-hebrew), var(--font-sans);
+
+  --size-name: clamp(56px, 9vw, 112px);
+  --size-h2: clamp(32px, 4vw, 44px);
+  --size-h3: 28px;
+  --size-body: 17px;
+  --size-caption: 15px;
+  --size-identifier: 13px;
+
+  /* §2.3 Space, radius, borders */
+  --unit: 8px;
+  --section-pad: clamp(64px, 10vh, 128px);
+  --content-max: 1120px;
+  --gutter: clamp(20px, 4vw, 48px);
+  --radius-control: 4px;
+  --radius-screen: 6px;
+  --nav-height: 64px;
+
+  /* §2.4 Motion */
+  --t-hover: 120ms;
+  --e-hover: ease-out;
+  --t-ui: 240ms;
+  --e-ui: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-status: 300ms;
+  --t-morph: 600ms;
+}
+
+/* R3.5 — every duration collapses; crossfades cap at 150ms. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-hover: 0ms;
+    --t-ui: 150ms;
+    --t-status: 150ms;
+    --t-morph: 0ms;
+  }
+}
