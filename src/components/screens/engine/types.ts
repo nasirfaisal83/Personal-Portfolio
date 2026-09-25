@@ -27,6 +27,8 @@ export interface SceneNode {
   kind?: NodeKind;
   /** Initial chip text, e.g. "PENDING". */
   status?: string;
+  /** Set the label along the top edge, leaving the box free for foreground artwork. */
+  labelAt?: "top";
   /** Bus nodes render as a band; this is its orientation. */
   orientation?: "horizontal" | "vertical";
   /** Alternate positions keyed by `morph` layout name (design §6.2). */

@@ -45,9 +45,15 @@ function overlay(state: ScreenState, currentScene: Scene) {
       })}
 
       {stock && inventory ? (
+        // Narrow stacks Order directly above Inventory, and Order's counter
+        // takes the space above, so the stock label goes below instead.
         <Identifier
           x={nodeRect(inventory, state.layout).x + 2}
-          y={nodeRect(inventory, state.layout).y - 10}
+          y={
+            narrow
+              ? nodeRect(inventory, state.layout).y + nodeRect(inventory, state.layout).h + 18
+              : nodeRect(inventory, state.layout).y - 10
+          }
           tone={stock === "released" ? "fault" : "signal"}
         >
           {`stock ${String(stock)}`}

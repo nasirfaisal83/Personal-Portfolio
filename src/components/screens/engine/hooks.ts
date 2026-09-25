@@ -18,7 +18,25 @@ export function useReducedMotionPref(): boolean {
   return reduced;
 }
 
-/** R4.3 / R4.7 — is the screen at least `threshold` visible? */
+type VisibilityEntry = Pick<IntersectionObserverEntry, "isIntersecting" | "intersectionRatio"> &
+  Partial<Pick<IntersectionObserverEntry, "intersectionRect" | "rootBounds">>;
+
+/**
+ * R4.3 / R4.7 — at least `threshold` of the element is visible. An element too
+ * tall to ever get there (a phone held sideways, or the narration open on a
+ * small phone) counts once it fills `threshold` of the viewport instead.
+ */
+export function isInView(entry: VisibilityEntry, threshold: number): boolean {
+  if (!entry.isIntersecting) return false;
+  if (entry.intersectionRatio >= threshold) return true;
+  const viewport = entry.rootBounds?.height ?? 0;
+  return viewport > 0 && (entry.intersectionRect?.height ?? 0) >= viewport * threshold;
+}
+
+/** Every 5%, so a tall element keeps reporting as it scrolls through. */
+const VISIBILITY_STEPS = Array.from({ length: 21 }, (_, i) => i / 20);
+
+/** R4.3 / R4.7 — is the screen in view, per `isInView`? */
 export function useInView<T extends Element>(threshold = 0.5) {
   const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
@@ -31,8 +49,8 @@ export function useInView<T extends Element>(threshold = 0.5) {
       return;
     }
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= threshold),
-      { threshold: [0, threshold, 1] },
+      ([entry]) => setInView(isInView(entry, threshold)),
+      { threshold: VISIBILITY_STEPS },
     );
     observer.observe(el);
     return () => observer.disconnect();

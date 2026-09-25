@@ -1,4 +1,9 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+/** Diagram text only: the narration list and live region repeat the same words. */
+function stageText(scope: Locator, text: string) {
+  return scope.locator("svg text").filter({ hasText: new RegExp(`^${text}$`) });
+}
 
 async function openScreen(page: Page, slug: string) {
   await page.goto("/");
@@ -13,13 +18,13 @@ test.describe("project screens", () => {
     const figure = section.locator("figure");
 
     await section.getByRole("button", { name: "Place order" }).click();
-    await expect(figure.locator("text=COMPLETED")).toHaveCount(2, { timeout: 15_000 });
+    await expect(stageText(figure, "COMPLETED")).toHaveCount(2, { timeout: 15_000 });
 
     await section.getByRole("button", { name: "Fail payment" }).click();
     await expect(figure.getByText("stock released")).toBeVisible({ timeout: 15_000 });
 
     await section.getByRole("button", { name: "Out of stock" }).click();
-    await expect(figure.locator("text=FAILED")).toHaveCount(2, { timeout: 15_000 });
+    await expect(stageText(figure, "FAILED")).toHaveCount(2, { timeout: 15_000 });
   });
 
   test("every screen exposes its narration as text", async ({ page }) => {
@@ -45,7 +50,8 @@ test.describe("project screens", () => {
     await expect(tpc).toHaveAttribute("aria-pressed", "true");
     await reactor.click();
     await expect(reactor).toHaveAttribute("aria-pressed", "true");
-    await expect(section.getByText("selector")).toBeVisible();
+    // The reactor internals are drawn over the server box, not under it.
+    await expect(stageText(section, "selector")).toBeVisible();
   });
 
   test("con-Detection shows no numeric confidence", async ({ page }) => {
@@ -71,7 +77,10 @@ test.describe("project screens", () => {
 });
 
 test.describe("reduced motion", () => {
-  test.use({ reducedMotion: "reduce" });
+  // `test.use({ reducedMotion })` doesn't reach matchMedia in this setup; emulateMedia does.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+  });
 
   test("skips the hero sequence and steps scenarios through their states", async ({ page }) => {
     await page.goto("/");
@@ -80,7 +89,7 @@ test.describe("reduced motion", () => {
     const section = await openScreen(page, "order-saga");
     await expect(section.getByRole("button", { name: "Play with motion" })).toBeVisible();
     await section.getByRole("button", { name: "Place order" }).click();
-    await expect(section.locator("figure").locator("text=COMPLETED")).toHaveCount(2, {
+    await expect(stageText(section.locator("figure"), "COMPLETED")).toHaveCount(2, {
       timeout: 15_000,
     });
     await expect(section.locator("figure circle[stroke='var(--screen)']")).toHaveCount(0);

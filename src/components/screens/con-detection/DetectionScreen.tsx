@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Screen, ScreenBoundary, useResponsiveScene } from "../engine/Screen";
+import { ResponsiveStage, Screen, ScreenBoundary, useNarrow } from "../engine/Screen";
 import { useInView, usePageVisible, useRafLoop, useReducedMotionPref } from "../engine/hooks";
 import type { Scene } from "../engine/types";
 import { CAPTION, CONES, FIRST_FRAME, FRAME_COUNT, FRAME_MS, PIPELINE } from "./scene";
@@ -153,9 +153,31 @@ function PipelineStrip({ active, width, y }: { active: number; width: number; y:
   );
 }
 
-function DetectionBody({ systemSummary }: { systemSummary: string }) {
-  const scene = useResponsiveScene(geometry);
+/** One layout's frame: the road, the frame counter and the pipeline strip. */
+function DetectionArt({ scene, frame }: { scene: Scene; frame: number }) {
   const [width, height] = scene.viewBox;
+  const frameNumber = String(FIRST_FRAME + frame).padStart(4, "0");
+  return (
+    <>
+      <rect x={0} y={0} width={width} height={height} fill="var(--screen)" />
+      <RoadScene frame={frame} width={width} height={height - 46} />
+      <text
+        x={width - 12}
+        y={22}
+        fill="var(--screen-muted)"
+        fontFamily="var(--font-mono)"
+        fontSize={12}
+        textAnchor="end"
+      >
+        {`frame ${frameNumber}`}
+      </text>
+      <PipelineStrip active={frame % PIPELINE.length} width={width - 24} y={height - 14} />
+    </>
+  );
+}
+
+function DetectionBody({ systemSummary }: { systemSummary: string }) {
+  const narrow = useNarrow();
   const { ref, inView } = useInView<HTMLDivElement>(0.5);
   const pageVisible = usePageVisible();
   const reduced = useReducedMotionPref();
@@ -191,9 +213,6 @@ function DetectionBody({ systemSummary }: { systemSummary: string }) {
     if (next >= FRAME_COUNT - 1) setPlaying(false);
   });
 
-  const frameNumber = String(FIRST_FRAME + frame).padStart(4, "0");
-  const stage = frame % PIPELINE.length;
-
   return (
     <div ref={ref}>
       <Screen
@@ -221,51 +240,43 @@ function DetectionBody({ systemSummary }: { systemSummary: string }) {
           </button>
         }
       >
-        <svg
-          className="screen__stage"
-          viewBox={`0 0 ${width} ${height}`}
+        <ResponsiveStage
+          scene={geometry}
+          narrow={narrow}
           aria-hidden="true"
           focusable="false"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <rect x={0} y={0} width={width} height={height} fill="var(--screen)" />
-          <RoadScene frame={frame} width={width} height={height - 46} />
-          <text
-            x={width - 12}
-            y={22}
-            fill="var(--screen-muted)"
-            fontFamily="var(--font-mono)"
-            fontSize={12}
-            textAnchor="end"
-          >
-            {`frame ${frameNumber}`}
-          </text>
-          <PipelineStrip active={stage} width={width - 24} y={height - 14} />
-        </svg>
+          draw={(variant) => <DetectionArt scene={variant} frame={frame} />}
+        />
       </Screen>
     </div>
   );
 }
 
+/** R4.8 — after a runtime failure, the last frame at rest. */
+function DetectionFallback({ systemSummary }: { systemSummary: string }) {
+  const narrow = useNarrow();
+  return (
+    <Screen
+      title={TITLE}
+      systemSummary={systemSummary}
+      note={CAPTION}
+      narration={NARRATION}
+      say={null}
+    >
+      <ResponsiveStage
+        scene={geometry}
+        narrow={narrow}
+        aria-hidden="true"
+        focusable="false"
+        draw={(variant) => <DetectionArt scene={variant} frame={FRAME_COUNT - 1} />}
+      />
+    </Screen>
+  );
+}
+
 export default function DetectionScreen({ systemSummary }: { systemSummary: string }) {
   return (
-    <ScreenBoundary
-      fallback={
-        <Screen
-          title={TITLE}
-          systemSummary={systemSummary}
-          note={CAPTION}
-          narration={NARRATION}
-          say={null}
-        >
-          <svg className="screen__stage" viewBox="0 0 720 405" aria-hidden="true" focusable="false">
-            <rect x={0} y={0} width={720} height={405} fill="var(--screen)" />
-            <RoadScene frame={FRAME_COUNT - 1} width={720} height={359} />
-            <PipelineStrip active={PIPELINE.length - 1} width={696} y={391} />
-          </svg>
-        </Screen>
-      }
-    >
+    <ScreenBoundary fallback={<DetectionFallback systemSummary={systemSummary} />}>
       <DetectionBody systemSummary={systemSummary} />
     </ScreenBoundary>
   );

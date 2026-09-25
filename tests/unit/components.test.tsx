@@ -43,10 +43,10 @@ describe("Community", () => {
 
 describe("CopyButton", () => {
   it("copies and announces, then returns to its label", async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, { clipboard: { writeText } });
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    // setup() installs its own navigator.clipboard stub, so spy on that one.
+    const writeText = vi.spyOn(navigator.clipboard, "writeText");
 
     render(<CopyButton value="a@b.c" label="Copy email" />);
     await user.click(screen.getByRole("button", { name: "Copy email" }));

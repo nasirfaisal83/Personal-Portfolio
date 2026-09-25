@@ -10,45 +10,35 @@ import { ANSWER_WORDS, scenarios } from "./scenarios";
 
 const TITLE = "rag-document-qa";
 
-/** Deterministic dot positions inside the vector panel — no randomness on rerender. */
+/**
+ * Deterministic dot positions inside the vector panel — no randomness on
+ * rerender. They start below the panel's label, which sits along its top edge.
+ */
 function dotPositions(count: number, w: number, h: number) {
   return Array.from({ length: count }, (_, i) => {
     const golden = (i * 0.6180339887) % 1;
     const row = Math.floor(i / 3);
     return {
       x: 18 + golden * (w - 36),
-      y: 20 + ((row * 26 + (i % 3) * 9) % (h - 40)),
+      y: 30 + ((row * 26 + (i % 3) * 9) % (h - 50)),
     };
   });
 }
 
-function overlay(state: ScreenState, currentScene: Scene) {
-  const narrow = currentScene.viewBox[0] < 500;
+/**
+ * Drawn over the nodes: the lit strategy pill and the vector panel's contents,
+ * which sit inside those nodes' boxes.
+ */
+function foreground(state: ScreenState, currentScene: Scene) {
   const nodes = new Map(currentScene.nodes.map((n) => [n.id, n]));
   const vectors = nodes.get("vectors");
-  const chunkNode = nodes.get("chunk");
-  const answerNode = nodes.get("answer");
-  const questionNode = nodes.get("question");
-  const visionNode = nodes.get("vision");
-  const pdfboxNode = nodes.get("pdfbox");
-
   const strategy = state.values["extract.strategy"];
-  const extractNote = state.values["extract.note"];
-  const blocks = Number(state.values["chunk.blocks"] ?? 0);
   const dots = Number(state.values["vectors.dots"] ?? 0);
   const query = state.values["vectors.query"] === true;
   const topK = Number(state.values["vectors.topk"] ?? 0);
-  const words = Number(state.values["answer.words"] ?? 0);
-  const showSources = state.values["answer.sources"] === true;
-  const questionText = state.values["question.text"];
 
   const vectorRect = vectors ? nodeRect(vectors, state.layout) : null;
   const positions = vectorRect ? dotPositions(CHUNK_COUNT, vectorRect.w, vectorRect.h) : [];
-
-  const answerLines: string[] = [];
-  if (words > 0) answerLines.push(ANSWER_WORDS.slice(0, words).join(" "));
-  if (words > 0 && words < ANSWER_WORDS.length) answerLines.push("event: token");
-  if (showSources) answerLines.push("event: sources");
 
   return (
     <g>
@@ -74,6 +64,78 @@ function overlay(state: ScreenState, currentScene: Scene) {
           />
         ) : null;
       })}
+
+      {/* The stored chunk dots, the query dot, and its lines to the top-k nearest. */}
+      {vectorRect ? (
+        <g>
+          {positions.slice(0, dots).map((p, i) => {
+            const near = query && i < topK;
+            return (
+              <circle
+                key={i}
+                cx={vectorRect.x + p.x}
+                cy={vectorRect.y + p.y}
+                r={near ? 4 : 3}
+                fill={near ? "var(--signal)" : "var(--screen-muted)"}
+              />
+            );
+          })}
+          {query ? (
+            <>
+              <circle
+                cx={vectorRect.cx}
+                cy={vectorRect.y + vectorRect.h - 12}
+                r={4}
+                fill="var(--signal)"
+                stroke="var(--screen)"
+                strokeWidth={2}
+              />
+              {positions.slice(0, topK).map((p, i) => (
+                <line
+                  key={i}
+                  x1={vectorRect.cx}
+                  y1={vectorRect.y + vectorRect.h - 12}
+                  x2={vectorRect.x + p.x}
+                  y2={vectorRect.y + p.y}
+                  stroke="var(--signal)"
+                  strokeWidth={1}
+                  opacity={0.5}
+                />
+              ))}
+            </>
+          ) : null}
+        </g>
+      ) : null}
+    </g>
+  );
+}
+
+function overlay(state: ScreenState, currentScene: Scene) {
+  const narrow = currentScene.viewBox[0] < 500;
+  const nodes = new Map(currentScene.nodes.map((n) => [n.id, n]));
+  const vectors = nodes.get("vectors");
+  const chunkNode = nodes.get("chunk");
+  const answerNode = nodes.get("answer");
+  const questionNode = nodes.get("question");
+  const visionNode = nodes.get("vision");
+  const pdfboxNode = nodes.get("pdfbox");
+
+  const extractNote = state.values["extract.note"];
+  const blocks = Number(state.values["chunk.blocks"] ?? 0);
+  const query = state.values["vectors.query"] === true;
+  const words = Number(state.values["answer.words"] ?? 0);
+  const showSources = state.values["answer.sources"] === true;
+  const questionText = state.values["question.text"];
+
+  const vectorRect = vectors ? nodeRect(vectors, state.layout) : null;
+
+  const answerLines: string[] = [];
+  if (words > 0) answerLines.push(ANSWER_WORDS.slice(0, words).join(" "));
+  if (words > 0 && words < ANSWER_WORDS.length) answerLines.push("event: token");
+  if (showSources) answerLines.push("event: sources");
+
+  return (
+    <g>
       {visionNode ? (
         <Caption
           x={nodeRect(visionNode, state.layout).x}
@@ -83,9 +145,16 @@ function overlay(state: ScreenState, currentScene: Scene) {
         </Caption>
       ) : null}
       {extractNote && pdfboxNode ? (
+        // Beside PDFBox when wide; under it when narrow, where the next pill is 8 units away.
         <Identifier
-          x={nodeRect(pdfboxNode, state.layout).x + nodeRect(pdfboxNode, state.layout).w + 6}
-          y={nodeRect(pdfboxNode, state.layout).y + 17}
+          x={
+            nodeRect(pdfboxNode, state.layout).x +
+            (narrow ? 0 : nodeRect(pdfboxNode, state.layout).w + 6)
+          }
+          y={
+            nodeRect(pdfboxNode, state.layout).y +
+            (narrow ? nodeRect(pdfboxNode, state.layout).h + 14 : 17)
+          }
           tone="fault"
         >
           {String(extractNote)}
@@ -133,44 +202,16 @@ function overlay(state: ScreenState, currentScene: Scene) {
             strokeWidth={1}
             strokeDasharray="3 3"
           />
-          {positions.slice(0, dots).map((p, i) => {
-            const near = query && i < topK;
-            return (
-              <circle
-                key={i}
-                cx={vectorRect.x + p.x}
-                cy={vectorRect.y + p.y}
-                r={near ? 4 : 3}
-                fill={near ? "var(--signal)" : "var(--screen-muted)"}
-              />
-            );
-          })}
           {query ? (
-            <>
-              <circle
-                cx={vectorRect.cx}
-                cy={vectorRect.y + vectorRect.h - 16}
-                r={4}
-                fill="var(--signal)"
-                stroke="var(--screen)"
-                strokeWidth={2}
-              />
-              {positions.slice(0, topK).map((p, i) => (
-                <line
-                  key={i}
-                  x1={vectorRect.cx}
-                  y1={vectorRect.y + vectorRect.h - 16}
-                  x2={vectorRect.x + p.x}
-                  y2={vectorRect.y + p.y}
-                  stroke="var(--signal)"
-                  strokeWidth={1}
-                  opacity={0.5}
-                />
-              ))}
-              <Identifier x={vectorRect.x + 6} y={vectorRect.y - 8} tone="signal">
-                {`top-k ${TOP_K}`}
-              </Identifier>
-            </>
+            // Narrow: right-aligned, clear of the chunk caption to its left.
+            <Identifier
+              x={narrow ? vectorRect.x + vectorRect.w - 6 : vectorRect.x + 6}
+              y={vectorRect.y - 8}
+              anchor={narrow ? "end" : "start"}
+              tone="signal"
+            >
+              {`top-k ${TOP_K}`}
+            </Identifier>
           ) : null}
           <Caption x={vectorRect.x} y={vectorRect.y + vectorRect.h + 16}>
             text-embedding-3-small, 1536 dimensions
@@ -193,22 +234,22 @@ function overlay(state: ScreenState, currentScene: Scene) {
         <g>
           <Terminal
             x={narrow ? 12 : 16}
-            y={narrow ? 528 : 344}
+            y={narrow ? 544 : 344}
             w={narrow ? 336 : 400}
             lines={answerLines}
           />
           {showSources ? (
             <>
-              <Identifier x={narrow ? 12 : 434} y={narrow ? 622 : 362} tone="signal">
+              <Identifier x={narrow ? 12 : 434} y={narrow ? 638 : 362} tone="signal">
                 Chunk 12, page 4
               </Identifier>
-              <Identifier x={narrow ? 12 : 434} y={narrow ? 640 : 380} tone="signal">
+              <Identifier x={narrow ? 12 : 434} y={narrow ? 656 : 380} tone="signal">
                 Chunk 7, page 2
               </Identifier>
-              <Identifier x={narrow ? 190 : 434} y={narrow ? 622 : 398}>
+              <Identifier x={narrow ? 190 : 434} y={narrow ? 638 : 398}>
                 confidence 0.87
               </Identifier>
-              <Caption x={narrow ? 190 : 434} y={narrow ? 640 : 414}>
+              <Caption x={narrow ? 190 : 434} y={narrow ? 656 : 414}>
                 example from the README
               </Caption>
             </>
@@ -228,6 +269,7 @@ export default function RagScreen({ systemSummary }: { systemSummary: string }) 
       scenarios={scenarios}
       autoplay="ingest"
       overlay={overlay}
+      foreground={foreground}
     />
   );
 }

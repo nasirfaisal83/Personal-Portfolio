@@ -34,6 +34,7 @@ body {
   font-family: var(--font-sans);
   font-size: var(--size-body);
   line-height: 1.6;
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -127,8 +128,10 @@ a {
   transition: color var(--t-hover) var(--e-hover);
 }
 
-a:hover {
-  color: var(--ink);
+@media (hover: hover) {
+  a:hover {
+    color: var(--ink);
+  }
 }
 
 /* R3.3 — hover and focus feedback is color, underline, and border only. */
@@ -201,9 +204,11 @@ a:hover {
     border-color var(--t-hover) var(--e-hover);
 }
 
-.btn:hover {
-  background: var(--ink);
-  color: var(--vellum);
+@media (hover: hover) {
+  .btn:hover {
+    background: var(--ink);
+    color: var(--vellum);
+  }
 }
 
 .btn--primary {
@@ -211,10 +216,12 @@ a:hover {
   color: var(--vellum);
 }
 
-.btn--primary:hover {
-  background: var(--signal-deep);
-  border-color: var(--signal-deep);
-  color: var(--vellum);
+@media (hover: hover) {
+  .btn--primary:hover {
+    background: var(--signal-deep);
+    border-color: var(--signal-deep);
+    color: var(--vellum);
+  }
 }
 
 .btn-row {
@@ -253,6 +260,21 @@ a:hover {
   width: 100%;
 }
 
+/* R11.2 — until hydration a screen carries both layouts and the viewport picks
+   one. This query must match NARROW_QUERY in screens/engine/Screen.tsx. */
+.screen__stage--narrow {
+  display: none;
+}
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .screen__stage--narrow {
+    display: block;
+  }
+  .screen__stage--wide {
+    display: none;
+  }
+}
+
 .screen__controls {
   display: flex;
   gap: 8px;
@@ -288,10 +310,31 @@ a:hover {
     color var(--t-hover) var(--e-hover);
 }
 
-.screen-btn:hover,
 .screen-btn[aria-pressed="true"] {
   border-color: var(--signal);
   color: var(--signal);
+}
+
+@media (hover: hover) {
+  .screen-btn:hover {
+    border-color: var(--signal);
+    color: var(--signal);
+  }
+}
+
+/* Phones: the title sits above its note, and the buttons wrap onto rows rather
+   than scrolling sideways past the edge of the screen. */
+@media (max-width: 767px) {
+  .screen__strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .screen__controls {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
 }
 
 .screen__text {
@@ -422,10 +465,16 @@ a:hover {
     color var(--t-hover) var(--e-hover);
 }
 
-.nav__links a:hover,
 .nav__links a[aria-current="true"] {
   border-bottom-color: var(--signal-deep);
   color: var(--signal-deep);
+}
+
+@media (hover: hover) {
+  .nav__links a:hover {
+    border-bottom-color: var(--signal-deep);
+    color: var(--signal-deep);
+  }
 }
 
 .nav__toggle {
@@ -442,12 +491,12 @@ a:hover {
 }
 
 @media (max-width: 767px) {
-  .nav__toggle {
+  .has-js .nav__toggle {
     display: inline-flex;
     align-items: center;
   }
 
-  .nav__links {
+  .has-js .nav__links {
     display: none;
     position: absolute;
     inset: var(--nav-height) 0 auto 0;
@@ -456,13 +505,28 @@ a:hover {
     padding: 8px var(--gutter) 24px;
   }
 
-  .nav__links--open {
+  .has-js .nav__links--open {
     display: block;
   }
 
-  .nav__links ul {
+  .has-js .nav__links ul {
     flex-direction: column;
     gap: 4px;
+  }
+
+  /* Without JavaScript the toggle can't open anything, so the links stay out as
+     a wrapped row under the name, and the taller bar scrolls away. */
+  body:not(.has-js) .nav {
+    position: static;
+  }
+
+  body:not(.has-js) .nav__inner {
+    flex-wrap: wrap;
+    gap: 0 24px;
+  }
+
+  body:not(.has-js) .nav__links ul {
+    gap: 0 20px;
   }
 }
 
@@ -474,6 +538,7 @@ a:hover {
 
 .hero__grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 48px;
   align-items: start;
 }
@@ -521,7 +586,10 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
+  /* Plex Mono's latin subset has no box-drawing glyphs, and mixing in a
+     fallback's wider ones breaks the columns and overflows a phone. A system
+     monospace face sets every glyph on one grid. */
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: clamp(9px, 1.5vw, 14px);
   line-height: 1.45;
   color: var(--signal);
@@ -566,8 +634,11 @@ a:hover {
 
 /* ============================================================== projects */
 
+/* One explicit minmax(0, 1fr) track: an auto track would grow to the screen's
+   widest row and push the whole page sideways on a phone. */
 .project {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 32px;
   align-items: start;
   padding-top: 40px;
@@ -597,6 +668,7 @@ a:hover {
 
 .about__grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 48px;
 }
 
@@ -640,6 +712,7 @@ a:hover {
 
 .skills {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 32px;
 }
 
@@ -658,7 +731,9 @@ a:hover {
   list-style: none;
 }
 
-.skills__list li + li::before {
+/* The separator trails each item, like a comma, so a wrapped line starts flush
+   left instead of with a bar and an indent. */
+.skills__list li:not(:last-child)::after {
   content: "";
   display: inline-block;
   width: 1px;

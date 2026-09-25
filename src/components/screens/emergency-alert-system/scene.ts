@@ -16,7 +16,16 @@ export const OTHER_FRAMES = ["UNSUBSCRIBE", "DISCONNECT", "ERROR"] as const;
 export const scene: Scene = {
   viewBox: [720, 400],
   nodes: [
-    { id: "server", label: "StompServer", x: 250, y: 120, w: 220, h: 160, kind: "service" },
+    {
+      id: "server",
+      label: "StompServer",
+      x: 250,
+      y: 120,
+      w: 220,
+      h: 160,
+      kind: "service",
+      labelAt: "top",
+    },
     { id: "clientA", label: "client A", x: 40, y: 40, w: 128, h: 38, kind: "client" },
     { id: "clientB", label: "client B", x: 40, y: 176, w: 128, h: 38, kind: "client" },
     { id: "clientC", label: "client C", sub: "C++", x: 40, y: 312, w: 128, h: 38, kind: "client" },
@@ -32,7 +41,16 @@ export const scene: Scene = {
   narrow: {
     viewBox: [360, 560],
     nodes: [
-      { id: "server", label: "StompServer", x: 60, y: 24, w: 240, h: 150, kind: "service" },
+      {
+        id: "server",
+        label: "StompServer",
+        x: 60,
+        y: 24,
+        w: 240,
+        h: 150,
+        kind: "service",
+        labelAt: "top",
+      },
       { id: "clientA", label: "client A", x: 12, y: 260, w: 150, h: 36, kind: "client" },
       { id: "clientB", label: "client B", x: 196, y: 260, w: 150, h: 36, kind: "client" },
       {

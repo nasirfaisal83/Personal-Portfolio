@@ -2,6 +2,8 @@ import { ImageResponse } from "next/og";
 import { heroAscii } from "@/components/hero/heroMap";
 import { site } from "@/content/site";
 
+export const dynamic = "force-static";
+
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = site.name;

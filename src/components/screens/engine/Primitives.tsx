@@ -101,9 +101,13 @@ export function Bus({ node, layout }: { node: SceneNode; layout: string | null }
 
 /* ------------------------------------------------------------------ chip */
 
+export function chipWidth(value: string): number {
+  return Math.max(52, value.length * 7 + 14);
+}
+
 /** R12.4 — every chip carries its text; colour never carries state alone. */
 export function StatusChip({ x, y, chip }: { x: number; y: number; chip: ChipState }) {
-  const width = Math.max(52, chip.value.length * 7 + 14);
+  const width = chipWidth(chip.value);
   return (
     <g style={{ transition: `opacity var(--t-status) ease-out` }}>
       <rect
@@ -143,6 +147,8 @@ export interface NodeProps {
   ariaLabel?: string;
 }
 
+const HIT_PAD = 8;
+
 export function Node({ node, layout, chip, pulse, elapsed, onActivate, ariaLabel }: NodeProps) {
   const rect = nodeRect(node, layout);
   const pulsing = pulse !== undefined && elapsed - pulse.at < PULSE_MS;
@@ -164,7 +170,7 @@ export function Node({ node, layout, chip, pulse, elapsed, onActivate, ariaLabel
       />
       <text
         x={rect.cx}
-        y={node.sub ? rect.cy : rect.cy + 4}
+        y={node.labelAt === "top" ? rect.y + 20 : node.sub ? rect.cy : rect.cy + 4}
         fill="var(--screen-ink)"
         fontFamily="var(--font-sans)"
         fontSize={13}
@@ -184,7 +190,15 @@ export function Node({ node, layout, chip, pulse, elapsed, onActivate, ariaLabel
           {node.sub}
         </text>
       ) : null}
-      {chip ? <StatusChip x={rect.cx - 30} y={rect.y + rect.h + 6} chip={chip} /> : null}
+      {chip ? (
+        <StatusChip
+          // 30 left of centre, but a long chip is pulled back under its own node
+          // rather than running on into its neighbours.
+          x={Math.max(rect.x, Math.min(rect.cx - 30, rect.x + rect.w - chipWidth(chip.value)))}
+          y={rect.y + rect.h + 6}
+          chip={chip}
+        />
+      ) : null}
     </>
   );
 
@@ -204,6 +218,15 @@ export function Node({ node, layout, chip, pulse, elapsed, onActivate, ariaLabel
         }
       }}
     >
+      {/* The hit area reaches past the drawn box so a 34-unit node is a 44px
+          touch target on a 360px phone. */}
+      <rect
+        x={rect.x - HIT_PAD}
+        y={rect.y - HIT_PAD}
+        width={rect.w + HIT_PAD * 2}
+        height={rect.h + HIT_PAD * 2}
+        fill="transparent"
+      />
       {body}
     </g>
   );
@@ -333,6 +356,22 @@ export function Gauge({
 
 /* -------------------------------------------------------------- terminal */
 
+/** Break a line at spaces so that no piece is longer than `max` characters. */
+export function wrapText(line: string, max: number): string[] {
+  const out: string[] = [];
+  let current = "";
+  for (const word of line.split(" ")) {
+    if (current && current.length + 1 + word.length > max) {
+      out.push(current);
+      current = word;
+    } else {
+      current = current ? `${current} ${word}` : word;
+    }
+  }
+  if (current) out.push(current);
+  return out;
+}
+
 /** A three-line monospaced strip for streamed text (design §6.3). */
 export function Terminal({
   x,
@@ -345,7 +384,9 @@ export function Terminal({
   w?: number;
   lines: string[];
 }) {
-  const shown = lines.slice(-3);
+  // 12px mono is 7.2 units a character; lines wrap inside the 10-unit padding.
+  const max = Math.floor((w - 20) / 7.2);
+  const shown = lines.flatMap((line) => wrapText(line, max)).slice(-3);
   return (
     <g>
       <rect
@@ -433,8 +474,10 @@ export interface SceneLayerProps {
   trails?: boolean;
   onNodeActivate?: (id: string) => void;
   nodeAriaLabel?: (node: SceneNode) => string;
-  /** Extra artwork drawn between the edges and the packets. */
+  /** Extra artwork drawn under the nodes: annotations beside and between them. */
   children?: React.ReactNode;
+  /** Artwork drawn over the nodes — anything that sits inside a node's box. */
+  foreground?: React.ReactNode;
 }
 
 /** Renders the whole scene: grid, edges, buses, nodes, then packets on top. */
@@ -445,6 +488,7 @@ export function SceneLayer({
   onNodeActivate,
   nodeAriaLabel,
   children,
+  foreground,
 }: SceneLayerProps) {
   const [width, height] = scene.viewBox;
   const layout = state.layout;
@@ -490,6 +534,7 @@ export function SceneLayer({
           />
         ))}
       </g>
+      {foreground}
       <g>
         {state.packets.map((packet) => {
           const edge = scene.edges.find((e) => e.id === packet.edge);

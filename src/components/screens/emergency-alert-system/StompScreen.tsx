@@ -89,7 +89,7 @@ function ServerInternals({
           strokeWidth={1}
           strokeDasharray="5 5"
         />
-        <Identifier x={rect.x + 46} y={rect.y + 82} anchor="middle" tone="signal">
+        <Identifier x={rect.x + 46} y={rect.y + 116} anchor="middle" tone="signal">
           selector
         </Identifier>
         {[0, 1, 2].map((i) => (
@@ -112,94 +112,101 @@ function ServerInternals({
   );
 }
 
-function makeOverlay(mode: Mode) {
-  return function overlay(state: ScreenState, currentScene: Scene) {
-    const nodes = new Map(currentScene.nodes.map((n) => [n.id, n]));
-    const server = nodes.get("server");
-    const event = state.values["event"];
-
+/** Drawn over the server box: the mode tag in its corner and the internals. */
+function makeForeground(mode: Mode) {
+  return function foreground(state: ScreenState, currentScene: Scene) {
+    const server = currentScene.nodes.find((n) => n.id === "server");
+    if (!server) return null;
+    const rect = nodeRect(server, state.layout);
     return (
       <g>
-        {server ? (
-          <Identifier
-            x={nodeRect(server, state.layout).cx}
-            y={nodeRect(server, state.layout).y + 24}
-            anchor="middle"
-          >
-            {mode}
-          </Identifier>
-        ) : null}
-
+        <Identifier x={rect.x + rect.w - 10} y={rect.y + 20} anchor="end">
+          {mode}
+        </Identifier>
         <ServerInternals state={state} currentScene={currentScene} mode={mode} />
-
-        {(["A", "B", "C"] as const).map((id) => {
-          const node = nodes.get(`client${id}`);
-          if (!node) return null;
-          const rect = nodeRect(node, state.layout);
-          const subscribed = state.values[`subscribed.${id}`] === true;
-          const delivered = state.values[`delivered.${id}`] === true;
-          const receipt = state.values[`receipt.${id}`] === true;
-          return (
-            <g key={id}>
-              {subscribed ? (
-                <Identifier x={rect.x} y={rect.y + rect.h + 16} tone="signal">
-                  {`subscribed ${CHANNEL}`}
-                </Identifier>
-              ) : null}
-              {delivered ? (
-                <Identifier x={rect.x} y={rect.y + rect.h + 32} tone="signal">
-                  MESSAGE
-                </Identifier>
-              ) : null}
-              {receipt ? (
-                <Identifier x={rect.x} y={rect.y + rect.h + 32}>
-                  RECEIPT
-                </Identifier>
-              ) : null}
-            </g>
-          );
-        })}
-
-        {server && event ? (
-          <g>
-            <rect
-              x={nodeRect(server, state.layout).x + nodeRect(server, state.layout).w + 20}
-              y={nodeRect(server, state.layout).y}
-              width={168}
-              height={44}
-              rx={4}
-              fill="var(--screen)"
-              stroke="var(--signal)"
-              strokeWidth={1}
-            />
-            <Identifier
-              x={nodeRect(server, state.layout).x + nodeRect(server, state.layout).w + 30}
-              y={nodeRect(server, state.layout).y + 20}
-              tone="signal"
-            >
-              {String(event)}
-            </Identifier>
-            <Caption
-              x={nodeRect(server, state.layout).x + nodeRect(server, state.layout).w + 30}
-              y={nodeRect(server, state.layout).y + 36}
-            >
-              example from the README
-            </Caption>
-          </g>
-        ) : null}
-
-        {server ? (
-          <Identifier
-            x={nodeRect(server, state.layout).x - 12}
-            y={nodeRect(server, state.layout).y - 12}
-            anchor="end"
-          >
-            {CHANNEL}
-          </Identifier>
-        ) : null}
       </g>
     );
   };
+}
+
+function overlay(state: ScreenState, currentScene: Scene) {
+  const narrow = currentScene.viewBox[0] < 500;
+  const nodes = new Map(currentScene.nodes.map((n) => [n.id, n]));
+  const server = nodes.get("server");
+  const serverRect = server ? nodeRect(server, state.layout) : null;
+  const event = state.values["event"];
+
+  // Wide: the event card sits right of the server. Narrow: there is no room
+  // beside it, so the card is centred under client C.
+  const card = serverRect
+    ? narrow
+      ? { x: (currentScene.viewBox[0] - 168) / 2, y: 484 }
+      : { x: serverRect.x + serverRect.w + 20, y: serverRect.y }
+    : null;
+
+  return (
+    <g>
+      {(["A", "B", "C"] as const).map((id) => {
+        const node = nodes.get(`client${id}`);
+        if (!node) return null;
+        const rect = nodeRect(node, state.layout);
+        const subscribed = state.values[`subscribed.${id}`] === true;
+        const delivered = state.values[`delivered.${id}`] === true;
+        const receipt = state.values[`receipt.${id}`] === true;
+        return (
+          <g key={id}>
+            {subscribed ? (
+              <Identifier x={rect.x} y={rect.y + rect.h + 16} tone="signal">
+                {`subscribed ${CHANNEL}`}
+              </Identifier>
+            ) : null}
+            {delivered ? (
+              <Identifier x={rect.x} y={rect.y + rect.h + 32} tone="signal">
+                MESSAGE
+              </Identifier>
+            ) : null}
+            {receipt ? (
+              <Identifier x={rect.x} y={rect.y + rect.h + 32}>
+                RECEIPT
+              </Identifier>
+            ) : null}
+          </g>
+        );
+      })}
+
+      {card && event ? (
+        <g>
+          <rect
+            x={card.x}
+            y={card.y}
+            width={168}
+            height={44}
+            rx={4}
+            fill="var(--screen)"
+            stroke="var(--signal)"
+            strokeWidth={1}
+          />
+          <Identifier x={card.x + 10} y={card.y + 20} tone="signal">
+            {String(event)}
+          </Identifier>
+          <Caption x={card.x + 10} y={card.y + 36}>
+            example from the README
+          </Caption>
+        </g>
+      ) : null}
+
+      {serverRect ? (
+        // Narrow: the server is near the left edge, so the channel name goes above it.
+        <Identifier
+          x={narrow ? serverRect.x : serverRect.x - 12}
+          y={narrow ? serverRect.y - 8 : serverRect.y - 12}
+          anchor={narrow ? "start" : "end"}
+        >
+          {CHANNEL}
+        </Identifier>
+      ) : null}
+    </g>
+  );
 }
 
 export default function StompScreen({ systemSummary }: { systemSummary: string }) {
@@ -213,7 +220,8 @@ export default function StompScreen({ systemSummary }: { systemSummary: string }
       scene={scene}
       scenarios={scenarios}
       autoplay="connect"
-      overlay={makeOverlay(mode)}
+      overlay={overlay}
+      foreground={makeForeground(mode)}
       extraControls={() => (
         <>
           {MODES.map((m) => (

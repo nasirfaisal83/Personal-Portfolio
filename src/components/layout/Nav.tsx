@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { site } from "@/content/site";
 
 const SECTIONS = [
@@ -24,6 +24,8 @@ export function Nav() {
   const [current, setCurrent] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const header = useRef<HTMLElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -52,16 +54,40 @@ export function Nav() {
     return () => observer.disconnect();
   }, [onHome]);
 
+  // The open menu closes on Escape (focus returns to the toggle) and on a tap
+  // anywhere outside the bar.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      toggle.current?.focus();
+    };
+    const onPointer = (event: PointerEvent) => {
+      if (!header.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [open]);
+
   const href = (id: string) => (onHome ? `#${id}` : `/#${id}`);
 
   return (
-    <header className={`nav${scrolled ? " nav--scrolled" : ""}`}>
+    <header ref={header} className={`nav${scrolled ? " nav--scrolled" : ""}`}>
       <div className="shell nav__inner">
         <Link href="/" className="nav__name">
           {site.name}
         </Link>
 
-        <nav aria-label="Sections" className={`nav__links${open ? " nav__links--open" : ""}`}>
+        <nav
+          id="nav-links"
+          aria-label="Sections"
+          className={`nav__links${open ? " nav__links--open" : ""}`}
+        >
           <ul>
             {SECTIONS.map((section) => (
               <li key={section.id}>
@@ -83,9 +109,11 @@ export function Nav() {
         </nav>
 
         <button
+          ref={toggle}
           type="button"
           className="nav__toggle"
           aria-expanded={open}
+          aria-controls="nav-links"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? "Close" : "Menu"}

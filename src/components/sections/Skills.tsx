@@ -7,8 +7,8 @@ import { captionForSkill, captionText } from "@/lib/skillsIndex";
 
 /**
  * R7 — the groups and items from PRD §5.5 and nothing else: no bars, no
- * percentages, no years, no stars. Hovering or focusing an item dims the rest
- * and names the projects that use it, computed from `projects[].stack`.
+ * percentages, no years, no stars. Hovering, focusing or tapping an item dims
+ * the rest and names the projects that use it, computed from `projects[].stack`.
  */
 export function Skills() {
   const [active, setActive] = useState<{ group: string; item: string } | null>(null);
@@ -35,6 +35,7 @@ export function Skills() {
                         data-active={
                           active?.group === group.group && active.item === item ? "true" : "false"
                         }
+                        onClick={() => setActive({ group: group.group, item })}
                         onMouseEnter={() => setActive({ group: group.group, item })}
                         onMouseLeave={() => setActive(null)}
                         onFocus={() => setActive({ group: group.group, item })}

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { hydrated } from "./hydrated";
 
 test.describe("home page", () => {
   test("shows who this is above the fold", async ({ page }) => {
@@ -44,7 +45,11 @@ test.describe("home page", () => {
     await page.goto("/");
     // R2.1 — the README state is shown, then it resolves into the vector map.
     await expect(page.locator(".hero__ascii")).toBeVisible({ timeout: 900 });
-    await expect(page.locator(".hero__ascii")).toHaveCount(0, { timeout: 1600 });
+    // Polled every 50ms: expect's own backoff (0, 100, 350, 850, 1850ms) has no
+    // check between 850ms and the 1.6s deadline.
+    await expect
+      .poll(() => page.locator(".hero__ascii").count(), { timeout: 1600, intervals: [50] })
+      .toBe(0);
     expect(Date.now() - start).toBeLessThan(2600);
 
     // R2.2 — a reload inside the same session goes straight to the running state.
@@ -55,6 +60,7 @@ test.describe("home page", () => {
 
   test("a hero node moves focus to that project's heading", async ({ page }) => {
     await page.goto("/");
+    await hydrated(page);
     await page.getByRole("button", { name: "Go to order-saga" }).click();
     await expect(page.locator("#project-order-saga")).toBeFocused();
   });
@@ -89,6 +95,7 @@ test.describe("home page", () => {
     test.skip(browserName !== "chromium", "clipboard permissions are chromium-only here");
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto("/");
+    await hydrated(page);
     await page.getByRole("button", { name: "Copy email" }).click();
     await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy email" })).toBeVisible({ timeout: 4000 });

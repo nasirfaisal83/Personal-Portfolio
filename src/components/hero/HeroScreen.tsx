@@ -9,7 +9,8 @@ import {
   useRafLoop,
   useReducedMotionPref,
 } from "../screens/engine/hooks";
-import { useResponsiveScene } from "../screens/engine/Screen";
+import { ResponsiveStage, useNarrow } from "../screens/engine/Screen";
+import type { Scene } from "../screens/engine/types";
 import { HeroAscii } from "./HeroAscii";
 import { heroNodes, heroScene } from "./heroMap";
 
@@ -28,7 +29,14 @@ function useHeroSequence(enabled: boolean): Phase {
   const [phase, setPhase] = useState<Phase>("done");
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setPhase("done");
+      return;
+    }
+    // The preference hook reads false until its own effect has run, so ask the
+    // media query directly; otherwise reduced motion would start the sequence,
+    // cancel its timers a moment later, and leave the README layer on screen.
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
     let alreadyPlayed = true;
     try {
       alreadyPlayed = window.sessionStorage.getItem(SESSION_KEY) === "1";
@@ -63,7 +71,7 @@ interface AmbientPacket {
 }
 
 export function HeroScreen({ onSelectProject }: { onSelectProject: (slug: string) => void }) {
-  const scene = useResponsiveScene(heroScene);
+  const narrow = useNarrow();
   const reduced = useReducedMotionPref();
   const { ref, inView } = useInView<HTMLDivElement>(0.3);
   const pageVisible = usePageVisible();
@@ -89,7 +97,7 @@ export function HeroScreen({ onSelectProject }: { onSelectProject: (slug: string
     if (!packet && clock.current >= nextLaunch.current) {
       const meta = heroNodes[cursor.current % heroNodes.length];
       cursor.current += 1;
-      const edge = scene.edges.find((e) => e.from === meta.id);
+      const edge = heroScene.edges.find((e) => e.from === meta.id);
       if (edge) setPacket({ edge: edge.id, label: meta.fragment, start: clock.current });
       nextLaunch.current = clock.current + AMBIENT_INTERVAL_MS;
     }
@@ -103,87 +111,95 @@ export function HeroScreen({ onSelectProject }: { onSelectProject: (slug: string
     [onSelectProject],
   );
 
-  const [width, height] = scene.viewBox;
-
-  const packetPoint = (() => {
+  // Positions differ between the two layouts, so the packet is placed per drawn scene.
+  const packetPoint = (scene: Scene) => {
     if (!packet) return null;
     const edge = scene.edges.find((e) => e.id === packet.edge);
     if (!edge) return null;
     const points = edgePoints(scene, edge, null);
     const t = Math.min(1, (now - packet.start) / AMBIENT_TRAVEL_MS);
     return { point: pointAt(points, t), label: packet.label };
-  })();
+  };
+
+  const drawMap = (scene: Scene) => {
+    const [width, height] = scene.viewBox;
+    const ambient = packetPoint(scene);
+    return (
+      <>
+        <SceneGrid width={width} height={height} />
+        <g>
+          {scene.edges.map((edge) => {
+            const points = edgePoints(scene, edge, null);
+            const length = polylineLength(points);
+            return (
+              <path
+                key={edge.id}
+                d={pathD(points)}
+                fill="none"
+                stroke="var(--screen-muted)"
+                strokeWidth={1.5}
+                opacity={0.6}
+                className={resolving ? "hero__edge hero__edge--draw" : "hero__edge"}
+                style={
+                  resolving ? { strokeDasharray: length, strokeDashoffset: length } : undefined
+                }
+              />
+            );
+          })}
+        </g>
+        <g className={resolving ? "hero__nodes hero__nodes--settle" : "hero__nodes"}>
+          {scene.nodes.map((node) => (
+            <Node
+              key={node.id}
+              node={node}
+              layout={null}
+              elapsed={0}
+              onActivate={node.id === "portfolio" ? undefined : activate}
+              ariaLabel={node.id === "portfolio" ? undefined : `Go to ${node.label}`}
+            />
+          ))}
+        </g>
+        {ambient ? (
+          <g aria-hidden="true">
+            <circle
+              cx={ambient.point.x}
+              cy={ambient.point.y}
+              r={4}
+              fill="var(--signal)"
+              stroke="var(--screen)"
+              strokeWidth={2}
+            />
+            <text
+              x={ambient.point.x}
+              y={ambient.point.y - 10}
+              fill="var(--signal)"
+              fontFamily="var(--font-mono)"
+              fontSize={12}
+              textAnchor="middle"
+            >
+              {ambient.label}
+            </text>
+          </g>
+        ) : null}
+      </>
+    );
+  };
 
   return (
     <div ref={ref} className="screen hero__screen">
       <div className="screen__strip">
         <span>five projects</span>
       </div>
-      <div className="hero__stack">
+      {/* `hero__map` sits on the wrapper: before hydration the stage holds both layouts. */}
+      <div className="hero__stack hero__map">
         {phase !== "done" ? <HeroAscii visible={phase === "ascii" || phase === "hold"} /> : null}
-        <svg
-          className="screen__stage hero__map"
-          viewBox={`0 0 ${width} ${height}`}
-          preserveAspectRatio="xMidYMid meet"
+        <ResponsiveStage
+          scene={heroScene}
+          narrow={narrow}
           aria-label="Map of the five projects. Each node opens that project's section."
           role="group"
-        >
-          <SceneGrid width={width} height={height} />
-          <g>
-            {scene.edges.map((edge) => {
-              const points = edgePoints(scene, edge, null);
-              const length = polylineLength(points);
-              return (
-                <path
-                  key={edge.id}
-                  d={pathD(points)}
-                  fill="none"
-                  stroke="var(--screen-muted)"
-                  strokeWidth={1.5}
-                  opacity={0.6}
-                  className={resolving ? "hero__edge hero__edge--draw" : "hero__edge"}
-                  style={
-                    resolving ? { strokeDasharray: length, strokeDashoffset: length } : undefined
-                  }
-                />
-              );
-            })}
-          </g>
-          <g className={resolving ? "hero__nodes hero__nodes--settle" : "hero__nodes"}>
-            {scene.nodes.map((node) => (
-              <Node
-                key={node.id}
-                node={node}
-                layout={null}
-                elapsed={0}
-                onActivate={node.id === "portfolio" ? undefined : activate}
-                ariaLabel={node.id === "portfolio" ? undefined : `Go to ${node.label}`}
-              />
-            ))}
-          </g>
-          {packetPoint ? (
-            <g aria-hidden="true">
-              <circle
-                cx={packetPoint.point.x}
-                cy={packetPoint.point.y}
-                r={4}
-                fill="var(--signal)"
-                stroke="var(--screen)"
-                strokeWidth={2}
-              />
-              <text
-                x={packetPoint.point.x}
-                y={packetPoint.point.y - 10}
-                fill="var(--signal)"
-                fontFamily="var(--font-mono)"
-                fontSize={12}
-                textAnchor="middle"
-              >
-                {packetPoint.label}
-              </text>
-            </g>
-          ) : null}
-        </svg>
+          draw={drawMap}
+        />
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ function overlay(state: ScreenState, currentScene: Scene) {
   const orchRect = orchestrator ? nodeRect(orchestrator, state.layout) : null;
   const factRect = factchecker ? nodeRect(factchecker, state.layout) : null;
   const postRect = postNode ? nodeRect(postNode, state.layout) : null;
+  const cardX = narrow ? 12 : (postRect?.x ?? 0);
 
   return (
     <g>
@@ -47,10 +48,15 @@ function overlay(state: ScreenState, currentScene: Scene) {
             opacity={0.8}
             style={{ transition: "stroke 300ms ease-out" }}
           />
+          {/* Wide: right of the ring. Narrow: the ring fills the width, so the
+              label sits beside the topic node above it. */}
           <Identifier
-            x={orchRect.cx}
-            y={orchRect.y - 26}
-            anchor="middle"
+            x={
+              narrow && topicNode
+                ? nodeRect(topicNode, state.layout).x + nodeRect(topicNode, state.layout).w + 10
+                : orchRect.x + orchRect.w + 32
+            }
+            y={narrow && topicNode ? nodeRect(topicNode, state.layout).y + 20 : orchRect.cy + 4}
             tone={spin > 0 ? "signal" : "muted"}
           >
             reason → act → observe
@@ -83,11 +89,12 @@ function overlay(state: ScreenState, currentScene: Scene) {
         </Identifier>
       ) : null}
 
-      {/* The fact-check gauge with its documented 0.6 threshold tick. */}
+      {/* The fact-check gauge with its documented 0.6 threshold tick. Narrow: it
+          moves right, off the FactChecker → LinkedInWriter edge below the node. */}
       {factRect ? (
         <g>
           <Gauge
-            x={factRect.x}
+            x={narrow ? 120 : factRect.x}
             y={factRect.y + factRect.h + 24}
             w={narrow ? 150 : 140}
             value={confidence}
@@ -95,25 +102,29 @@ function overlay(state: ScreenState, currentScene: Scene) {
             label="fact-check confidence"
           />
           {illustrative ? (
-            <Caption x={factRect.x} y={factRect.y + factRect.h + 66} tone="fault">
-              illustrative failing score
-            </Caption>
-          ) : null}
-          {illustrative ? (
-            <Caption x={factRect.x} y={factRect.y + factRect.h + 82}>
-              retry decided by the model, not by hardcoded Java
-            </Caption>
+            <>
+              <Caption x={narrow ? 120 : factRect.x} y={factRect.y + factRect.h + 66} tone="fault">
+                illustrative failing score
+              </Caption>
+              {/* The README's words, set on two lines to stay inside the stage. */}
+              <Caption x={narrow ? 120 : factRect.x} y={factRect.y + factRect.h + 82}>
+                retry decided by the model,
+              </Caption>
+              <Caption x={narrow ? 120 : factRect.x} y={factRect.y + factRect.h + 98}>
+                not by hardcoded Java
+              </Caption>
+            </>
           ) : null}
         </g>
       ) : null}
 
-      {/* The output card, with the README's markers. */}
+      {/* The output card, with the README's markers. Narrow: full width from the left edge. */}
       {postRect && postReady ? (
         <g>
           <rect
-            x={postRect.x}
+            x={cardX}
             y={postRect.y + postRect.h + 12}
-            width={narrow ? 336 : 260}
+            width={narrow ? 336 : 280}
             height={64}
             rx={4}
             fill="var(--screen)"
@@ -123,14 +134,14 @@ function overlay(state: ScreenState, currentScene: Scene) {
           {MARKERS.map((marker, i) => (
             <Identifier
               key={marker}
-              x={postRect.x + 10 + i * (narrow ? 100 : 84)}
+              x={cardX + 10 + i * (narrow ? 100 : 84)}
               y={postRect.y + postRect.h + 34}
               tone="signal"
             >
               {marker}
             </Identifier>
           ))}
-          <Caption x={postRect.x + 10} y={postRect.y + postRect.h + 58}>
+          <Caption x={cardX + 10} y={postRect.y + postRect.h + 58}>
             example response from the README, ~63 s
           </Caption>
         </g>

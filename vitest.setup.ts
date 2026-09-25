@@ -39,13 +39,15 @@ if (!("IntersectionObserver" in window)) {
     rootMargin = "";
     thresholds: number[] = [];
   }
-  window.IntersectionObserver =
-    MockIntersectionObserver as unknown as typeof window.IntersectionObserver;
+  // stubGlobal also sets it on jsdom's window; assigning window.IntersectionObserver
+  // directly fails to type-check because the `in` guard narrows window to never.
+  vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
 }
 
-if (typeof SVGElement !== "undefined") {
-  const proto = SVGPathElement?.prototype as unknown as Record<string, unknown> | undefined;
-  if (proto && !proto.getTotalLength) {
+// jsdom defines SVGElement but not SVGPathElement, so guard on the subclass itself.
+if (typeof SVGPathElement !== "undefined") {
+  const proto = SVGPathElement.prototype as unknown as Record<string, unknown>;
+  if (!proto.getTotalLength) {
     proto.getTotalLength = () => 100;
     proto.getPointAtLength = (l: number) => ({ x: l, y: 0 });
   }
