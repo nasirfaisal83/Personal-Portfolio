@@ -55,10 +55,9 @@ docs/readme-trace.md       every on-screen element traced to its README
 copy, so summaries, stack lists and dates can be edited without touching a
 component. `scripts/content-check.ts` runs from `prebuild`. It always fails if the project
 slug set is not exactly the six projects (the five in the requirements plus
-the Salon Appointment System), and it fails on a
-surviving `TODO_` placeholder when `NODE_ENV=production` — so placeholders warn
-while you develop and block the production build. CI enforces that gate on
-`main` only, which keeps pull requests green until the inputs below land.
+the Salon Appointment System). A surviving `TODO_` placeholder only warns, because
+the site hides every placeholder and can go live without them; it fails only
+with `CONTENT_GATE=strict`, which CI sets on `main` to track the inputs below.
 
 ### Hiding, showing and editing a project
 
@@ -84,7 +83,7 @@ hidden.
 
 ## Still needed
 
-These placeholders block a production build until they are filled in:
+These placeholders are hidden on the site until they are filled in:
 
 | Placeholder                    | What it needs                                                          |
 | ------------------------------ | ---------------------------------------------------------------------- |
@@ -93,8 +92,9 @@ These placeholders block a production build until they are filled in:
 | `TODO_DATES`                   | Start (and end) dates for the TA and Hasoub roles                      |
 | `public/resume.pdf`            | The resume to link; while it is missing every resume control is hidden |
 
-Set `NEXT_PUBLIC_SITE_URL` to the deployment origin so canonical URLs, the
-sitemap and the Open Graph tags point at the right host.
+Canonical URLs, the sitemap and the Open Graph tags use
+`https://www.faisalnasir.dev`. Set `NEXT_PUBLIC_SITE_URL` to deploy under
+another origin.
 
 ## Deviations from the design document
 

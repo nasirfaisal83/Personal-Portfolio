@@ -34,13 +34,13 @@ jobs:
       - name: Build (runs the content check)
         run: npm run build
 
-      # R15.2 — placeholders warn on a pull request and block the production
-      # build. This step goes green once task 5.1 supplies the missing inputs.
+      # R15.2 — placeholders only warn in the build (the site hides them), and
+      # this strict step reports them on main until the missing inputs land.
       - name: Production content gate
         if: github.ref == 'refs/heads/main'
         run: npm run content-check
         env:
-          NODE_ENV: production
+          CONTENT_GATE: strict
 
       - name: Bundle budgets
         run: npm run bundle-check

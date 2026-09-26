@@ -37,7 +37,7 @@ Writing e2e tests:
 - Take project slugs and titles from `tests/e2e/content.ts` (`visibleSlugs`, `visibleTitles`). A test about one project calls `test.skip(!onSite(slug), …)`, so hiding a project never fails the suite.
 - For reduced motion, call `page.emulateMedia({ reducedMotion: "reduce" })`. `test.use({ reducedMotion })` doesn't reach `matchMedia` in this setup.
 
-Production content gate (in CI this runs only on `main`): `NODE_ENV=production npm run content-check`. It fails while any `TODO_*` token remains in `src/content/*.ts`. Lighthouse: `npx lhci autorun` against `out/`, with every category at ≥ 0.9, LCP ≤ 2.5s and CLS ≤ 0.1. `lighthouserc.cjs` audits whichever case-study page was exported: `order-saga` if it's visible, otherwise the first one.
+Placeholders (`TODO_*` in `src/content/*.ts`) only warn during `npm run build`; the UI hides them, so the site deploys with them. `CONTENT_GATE=strict npm run content-check` makes them fail; CI runs that on `main` only. Don't key anything on `NODE_ENV`, which Vercel's build may set by itself. Lighthouse: `npx lhci autorun` against `out/`, with every category at ≥ 0.9, LCP ≤ 2.5s and CLS ≤ 0.1. `lighthouserc.cjs` audits whichever case-study page was exported: `order-saga` if it's visible, otherwise the first one.
 
 CI (`.github/workflows/ci.yml`, Node 20) runs, in order: lint → typecheck → unit → build → prod content gate (main only) → bundle-check → e2e → Lighthouse.
 

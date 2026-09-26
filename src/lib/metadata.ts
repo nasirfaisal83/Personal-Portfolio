@@ -40,8 +40,8 @@ export function describeSite(visibleSlugs: readonly string[]): string {
 
 export const siteDescription = describeSite(visibleProjects.map((project) => project.slug));
 
-/** Deployment origin; overridden per environment, defaulted for local builds. */
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://faisalnasir.dev").replace(
+/** Deployment origin: the live domain, unless NEXT_PUBLIC_SITE_URL says otherwise. */
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.faisalnasir.dev").replace(
   /\/$/,
   "",
 );
