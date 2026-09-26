@@ -1,4 +1,4 @@
-import { projects } from "@/content/projects";
+import { projects, visibleProjects, type Project } from "@/content/projects";
 import { skills, type SkillGroup } from "@/content/skills";
 
 /**
@@ -36,20 +36,34 @@ function matches(skill: string, entry: string): boolean {
   return s.split(" / ").some((part) => part.length > 1 && (e === part || e.startsWith(`${part} `)));
 }
 
-export function projectsForSkill(skill: string): string[] {
-  return projects.filter((p) => p.stack.some((entry) => matches(skill, entry))).map((p) => p.title);
+/** Titles of the projects in `pool` that use `skill` — by default, those on the site. */
+export function projectsForSkill(
+  skill: string,
+  pool: readonly Project[] = visibleProjects,
+): string[] {
+  return pool.filter((p) => p.stack.some((entry) => matches(skill, entry))).map((p) => p.title);
 }
 
-export type SkillCaption = { kind: "projects"; titles: string[] } | { kind: "label"; text: string };
+export type SkillCaption =
+  | { kind: "projects"; titles: string[] }
+  | { kind: "label"; text: string }
+  | { kind: "none" };
 
-export function captionForSkill(group: SkillGroup, skill: string): SkillCaption {
+export function captionForSkill(
+  group: SkillGroup,
+  skill: string,
+  shown: readonly Project[] = visibleProjects,
+): SkillCaption {
   if (group.label) return { kind: "label", text: group.label };
-  const titles = projectsForSkill(skill);
-  if (titles.length === 0) return { kind: "label", text: "Coursework" };
-  return { kind: "projects", titles };
+  const titles = projectsForSkill(skill, shown);
+  if (titles.length > 0) return { kind: "projects", titles };
+  // Used only by hidden projects: name nothing, rather than call it coursework.
+  if (projectsForSkill(skill, projects).length > 0) return { kind: "none" };
+  return { kind: "label", text: "Coursework" };
 }
 
 export function captionText(caption: SkillCaption): string {
+  if (caption.kind === "none") return "";
   return caption.kind === "label" ? caption.text : `Used in ${caption.titles.join(", ")}`;
 }
 

@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { heroAscii } from "@/components/hero/heroMap";
+import { visibleHeroMap } from "@/components/hero/heroMap";
 import { site } from "@/content/site";
 
 export const dynamic = "force-static";
@@ -14,35 +14,37 @@ export const alt = site.name;
  */
 export default function OpengraphImage() {
   return new ImageResponse(
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        background: "#0F1B2D",
-        color: "#E6EDF3",
-        padding: 72,
-        fontFamily: "monospace",
-      }}
-    >
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: 76, letterSpacing: -2 }}>{site.name}</div>
-        <div style={{ fontSize: 26, color: "#7A8BA0", marginTop: 16 }}>{site.roleLine}</div>
-      </div>
+    (
       <div
         style={{
+          width: "100%",
+          height: "100%",
           display: "flex",
-          whiteSpace: "pre",
-          fontSize: 20,
-          lineHeight: 1.35,
-          color: "#35D0C8",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          background: "#0F1B2D",
+          color: "#E6EDF3",
+          padding: 72,
+          fontFamily: "monospace",
         }}
       >
-        {heroAscii}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ fontSize: 76, letterSpacing: -2 }}>{site.name}</div>
+          <div style={{ fontSize: 26, color: "#7A8BA0", marginTop: 16 }}>{site.roleLine}</div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            whiteSpace: "pre",
+            fontSize: 20,
+            lineHeight: 1.35,
+            color: "#35D0C8",
+          }}
+        >
+          {visibleHeroMap.ascii}
+        </div>
       </div>
-    </div>,
+    ),
     size,
   );
 }

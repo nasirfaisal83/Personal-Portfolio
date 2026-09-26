@@ -29,6 +29,11 @@ const config = [
       ],
     },
   },
+  {
+    // CommonJS config files (lighthouserc.cjs) have to use require().
+    files: ["**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
 ];
 
 export default config;

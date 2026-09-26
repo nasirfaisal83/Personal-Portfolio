@@ -48,10 +48,9 @@ export function useInView<T extends Element>(threshold = 0.5) {
       setInView(true);
       return;
     }
-    const observer = new IntersectionObserver(
-      ([entry]) => setInView(isInView(entry, threshold)),
-      { threshold: VISIBILITY_STEPS },
-    );
+    const observer = new IntersectionObserver(([entry]) => setInView(isInView(entry, threshold)), {
+      threshold: VISIBILITY_STEPS,
+    });
     observer.observe(el);
     return () => observer.disconnect();
   }, [threshold]);

@@ -1,4 +1,5 @@
 import { Hero } from "@/components/hero/Hero";
+import { visibleHeroMap } from "@/components/hero/heroMap";
 import { Projects } from "@/components/sections/Projects";
 import { About } from "@/components/sections/About";
 import { Skills } from "@/components/sections/Skills";
@@ -9,7 +10,7 @@ import { resumeAvailable } from "@/lib/resume";
 export default function HomePage() {
   return (
     <>
-      <Hero resumeAvailable={resumeAvailable} />
+      <Hero resumeAvailable={resumeAvailable} map={visibleHeroMap} />
       <Projects />
       <About />
       <Skills />

@@ -12,7 +12,8 @@ import {
 import { ResponsiveStage, useNarrow } from "../screens/engine/Screen";
 import type { Scene } from "../screens/engine/types";
 import { HeroAscii } from "./HeroAscii";
-import { heroNodes, heroScene } from "./heroMap";
+import { countWord, plural } from "@/lib/count";
+import type { HeroMap } from "./heroMap";
 
 const SESSION_KEY = "hero-sequence-played";
 const AMBIENT_INTERVAL_MS = 2500;
@@ -70,7 +71,13 @@ interface AmbientPacket {
   start: number;
 }
 
-export function HeroScreen({ onSelectProject }: { onSelectProject: (slug: string) => void }) {
+export function HeroScreen({
+  map,
+  onSelectProject,
+}: {
+  map: HeroMap;
+  onSelectProject: (slug: string) => void;
+}) {
   const narrow = useNarrow();
   const reduced = useReducedMotionPref();
   const { ref, inView } = useInView<HTMLDivElement>(0.3);
@@ -94,10 +101,10 @@ export function HeroScreen({ onSelectProject }: { onSelectProject: (slug: string
     clock.current += delta;
     setNow(clock.current);
     if (packet && clock.current - packet.start >= AMBIENT_TRAVEL_MS) setPacket(null);
-    if (!packet && clock.current >= nextLaunch.current) {
-      const meta = heroNodes[cursor.current % heroNodes.length];
+    if (!packet && clock.current >= nextLaunch.current && map.nodes.length > 0) {
+      const meta = map.nodes[cursor.current % map.nodes.length];
       cursor.current += 1;
-      const edge = heroScene.edges.find((e) => e.from === meta.id);
+      const edge = map.scene.edges.find((e) => e.from === meta.id);
       if (edge) setPacket({ edge: edge.id, label: meta.fragment, start: clock.current });
       nextLaunch.current = clock.current + AMBIENT_INTERVAL_MS;
     }
@@ -185,18 +192,23 @@ export function HeroScreen({ onSelectProject }: { onSelectProject: (slug: string
     );
   };
 
+  const count = map.nodes.length;
+  const projectsLabel = `${countWord(count)} ${plural(count, "project", "projects")}`;
+
   return (
     <div ref={ref} className="screen hero__screen">
       <div className="screen__strip">
-        <span>five projects</span>
+        <span>{projectsLabel}</span>
       </div>
       {/* `hero__map` sits on the wrapper: before hydration the stage holds both layouts. */}
       <div className="hero__stack hero__map">
-        {phase !== "done" ? <HeroAscii visible={phase === "ascii" || phase === "hold"} /> : null}
+        {phase !== "done" ? (
+          <HeroAscii text={map.ascii} visible={phase === "ascii" || phase === "hold"} />
+        ) : null}
         <ResponsiveStage
-          scene={heroScene}
+          scene={map.scene}
           narrow={narrow}
-          aria-label="Map of the five projects. Each node opens that project's section."
+          aria-label={`Map of the ${projectsLabel}. Each node opens that project's section.`}
           role="group"
           draw={drawMap}
         />

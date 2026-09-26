@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CaseStudy } from "@/components/projects/CaseStudy";
-import { getProject, projects } from "@/content/projects";
+import { getProject, visibleProjects } from "@/content/projects";
 import { buildMetadata } from "@/lib/metadata";
 
-/** R5.1 — the five case-study routes are statically generated. */
+/** R5.1 — a case-study route is statically generated for each project on the site. */
 export function generateStaticParams() {
-  return projects.map((project) => ({ slug: project.slug }));
+  return visibleProjects.map((project) => ({ slug: project.slug }));
 }
 
 export async function generateMetadata({

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { visibleSlugs, visibleTitles } from "./content";
 import { hydrated } from "./hydrated";
 
 test.describe("home page", () => {
@@ -61,8 +62,9 @@ test.describe("home page", () => {
   test("a hero node moves focus to that project's heading", async ({ page }) => {
     await page.goto("/");
     await hydrated(page);
-    await page.getByRole("button", { name: "Go to order-saga" }).click();
-    await expect(page.locator("#project-order-saga")).toBeFocused();
+    const slug = visibleSlugs[0];
+    await page.getByRole("button", { name: `Go to ${slug}` }).click();
+    await expect(page.locator(`#project-${slug}`)).toBeFocused();
   });
 
   test("the nav underlines the section in view", async ({ page }) => {
@@ -71,16 +73,10 @@ test.describe("home page", () => {
     await expect(page.locator('.nav__links a[aria-current="true"]')).toHaveText("Skills");
   });
 
-  test("lists the five projects in the designed order", async ({ page }) => {
+  test("lists the projects on the site in the content file's order", async ({ page }) => {
     await page.goto("/");
     const titles = await page.locator(".project h3").allInnerTexts();
-    expect(titles).toEqual([
-      "Order-Saga",
-      "rag-document-qa",
-      "tech-news-agent",
-      "Emergency-Alert-System",
-      "con-Detection",
-    ]);
+    expect(titles).toEqual(visibleTitles);
   });
 
   test("shows no proficiency bars or percentages in the skills list", async ({ page }) => {

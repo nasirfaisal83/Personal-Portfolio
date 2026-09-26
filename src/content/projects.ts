@@ -2,8 +2,23 @@
 // `summary` and `stack` are quoted verbatim. `highlights` are the READMEs'
 // "Key Design" points. `howItWorks` only recombines those same statements —
 // it introduces no fact that is not already above it in this file.
+//
+// The Salon Appointment System is a private client project: its facts come
+// from PROJECT-OVERVIEW.md in its private repository (cited as §N), which asks
+// that the client stay unnamed and that no figure be invented.
+//
+// Hiding, showing and editing a project — change this file, then rebuild:
+// - `visible: false` takes the project off the site: its section, its
+//   /projects/<slug>/ page, its hero-map node, the sitemap, the Skills captions
+//   and the counts in the site copy. `visible: true` brings all of it back.
+// - Never delete an entry to hide it; the build checks that all six exist.
+// - The order of this list is the order of the sections on the page.
+// - Safe to edit: title, github, systemSummary, summary, stack, stackTable,
+//   howItWorks, highlights. Leave `slug` and `screen` alone: the page URLs, the
+//   hero map and each animated diagram are keyed to them.
+// - A project with no `github` is shown as a private client project.
 
-export type ScreenId = "order-saga" | "rag" | "agents" | "stomp" | "detection";
+export type ScreenId = "salon" | "order-saga" | "rag" | "agents" | "stomp" | "detection";
 
 export interface StackRow {
   layer: string;
@@ -12,8 +27,11 @@ export interface StackRow {
 
 export interface Project {
   slug: string;
+  /** On the site, or hidden from every part of it. See the note at the top. */
+  visible: boolean;
   title: string;
-  github: string;
+  /** The public repository. Leave it out for a private client project. */
+  github?: string;
   screen: ScreenId;
   /** One sentence used as the screen's accessible name (design §6.5). */
   systemSummary: string;
@@ -26,7 +44,83 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    slug: "salon",
+    visible: true,
+    title: "Salon Appointment System",
+    screen: "salon",
+    // No `github`: the repository is private, and the client is not named (§17).
+    systemSummary:
+      "a request-based salon booking system where a database exclusion constraint, not the application, decides who gets a contested slot",
+    summary:
+      "A full-stack appointment booking and salon-management system, built solo for a real client and running in production. Customers book without creating an account — they select services, a stylist and a time, then verify ownership of their phone number with a one-time code. Every booking arrives as a request; the assigned stylist approves or declines it from a dashboard. The system handles all messaging around that lifecycle: confirmations, declines, scheduled reminders, and a cryptographically signed link that lets a customer cancel or reschedule without ever logging in.",
+    stack: [
+      "Spring Boot 4.1",
+      "Java 21",
+      "Spring Web MVC",
+      "Spring Data JPA",
+      "Spring Security",
+      "Bean Validation",
+      "PostgreSQL 16 (btree_gist)",
+      "Flyway",
+      "Next.js 16 (App Router)",
+      "React 19",
+      "TypeScript",
+      "next-intl",
+      "Cloudflare R2",
+      "Thumbnailator",
+      "WebP ImageIO",
+      "JUnit 5",
+      "Mockito",
+      "AssertJ",
+      "Testcontainers",
+      "Docker",
+      "Docker Compose",
+      "GitHub Actions",
+    ],
+    stackTable: [
+      {
+        layer: "Backend",
+        tech: "Spring Boot 4.1, Java 21, Spring Web MVC, Spring Data JPA, Spring Security, Bean Validation",
+      },
+      {
+        layer: "Database",
+        tech: "PostgreSQL 16 with the btree_gist extension; schema owned by Flyway",
+      },
+      {
+        layer: "Authentication",
+        tech: "Stateless HMAC-signed JWTs in httpOnly cookies — no password storage anywhere",
+      },
+      { layer: "Frontend", tech: "Next.js 16 (App Router), React 19, TypeScript, next-intl" },
+      { layer: "Media pipeline", tech: "Cloudflare R2 (S3 API), Thumbnailator, WebP ImageIO" },
+      {
+        layer: "Messaging",
+        tech: "SMS gateway behind a provider abstraction, with a logging stub for local development",
+      },
+      { layer: "Testing", tech: "JUnit 5, Mockito, AssertJ, Testcontainers" },
+      {
+        layer: "Delivery",
+        tech: "Docker multi-stage builds for both services, Docker Compose, GitHub Actions CI",
+      },
+    ],
+    howItWorks: [
+      "A booking is a request, not an instant confirmation: the assigned stylist keeps the right to decline, so confirmation is a human decision. That one product rule gives the appointment a state machine of seven states — REQUESTED, CONFIRMED, DECLINED, EXPIRED, CANCELLED, COMPLETED and NO_SHOW — where every transition is a conditional UPDATE ... WHERE status = ?, so when two actors race, the one that affects zero rows gets a clean 409.",
+      "A customer picks services, a stylist and a date, and availability is computed on demand as working hours minus time off minus busy appointments; there is no slot table. They verify their phone with a one-time code, and POST /booking reads the phone from the verified cookie only, takes an advisory lock on salon and phone, applies the open-request cap, resolves the least-loaded qualifying stylist, snapshots duration and price, and inserts the request. The assigned stylist is notified and approves or declines from the dashboard.",
+      "Application-side availability checks are advisory only. The guarantee is a GiST exclusion constraint in PostgreSQL that physically cannot admit two overlapping active appointments for one stylist, pending and confirmed alike. When two customers tap the same slot, both pass the check, one insert commits, and the other fails with SQLSTATE 23P01, translated narrowly into 409 SLOT_CONFLICT.",
+      "A reschedule never moves the appointment: it inserts a new REQUESTED row pointing at the original, which stays CONFIRMED and keeps its slot and its reminders. Approving the replacement cancels the original silently. If nobody approves, the expiry worker, running every 60 seconds, expires the request without messaging anyone, and the original booking stands.",
+    ],
+    highlights: [
+      "The database is the arbiter: a GiST exclusion constraint over (staff_id, time range), partial on active statuses, cannot admit two overlapping appointments; application checks only produce good error messages.",
+      "One product decision — every booking is a request a stylist may decline — shapes a seven-state machine, an expiry worker, a notification for every state change, and the reschedule flow.",
+      "Rescheduling inserts a replacement request that points at the original, so the original holds its slot until the replacement is approved; a customer can never end up with no appointment.",
+      "Notifications carry a template identifier plus ordered parameters, never rendered strings — built for WhatsApp Business templates, and proven when an SMS vendor migration left the provider class untouched.",
+      "Customer photos are identified by their magic bytes and re-encoded to WebP, which strips EXIF location data as a side effect rather than as a step that can be skipped.",
+      "A startup guard refuses to boot when customer links would still point at localhost, turning a silent, customer-visible outage into a deploy that does not go live.",
+      "12,224 lines of tests against 11,610 lines of production code — 384 test methods across 48 classes — with integration tests that race two real threads against a real PostgreSQL 16.",
+    ],
+  },
+  {
     slug: "order-saga",
+    visible: true,
     title: "Order-Saga",
     screen: "order-saga",
     github: "https://github.com/nasirfaisal83/Order-Saga",
@@ -77,6 +171,7 @@ export const projects: Project[] = [
   },
   {
     slug: "rag-document-qa",
+    visible: true,
     title: "rag-document-qa",
     screen: "rag",
     github: "https://github.com/nasirfaisal83/rag-document-qa",
@@ -141,6 +236,7 @@ export const projects: Project[] = [
   },
   {
     slug: "tech-news-agent",
+    visible: true,
     title: "tech-news-agent",
     screen: "agents",
     github: "https://github.com/nasirfaisal83/tech-news-agent",
@@ -182,6 +278,7 @@ export const projects: Project[] = [
   },
   {
     slug: "emergency-alert-system",
+    visible: true,
     title: "Emergency-Alert-System",
     screen: "stomp",
     github: "https://github.com/nasirfaisal83/Emergency-Alert-System",
@@ -222,6 +319,7 @@ export const projects: Project[] = [
   },
   {
     slug: "con-detection",
+    visible: false,
     title: "con-Detection",
     screen: "detection",
     github: "https://github.com/nasirfaisal83/con-Detection",
@@ -257,8 +355,13 @@ export const projects: Project[] = [
   },
 ];
 
+/** Every project in this file, hidden or not — the content check counts these. */
 export const projectSlugs = projects.map((p) => p.slug);
 
+/** The projects on the site. Anything a visitor sees reads this list, never `projects`. */
+export const visibleProjects = projects.filter((p) => p.visible);
+
+/** A project on the site; a hidden one is treated as not existing. */
 export function getProject(slug: string): Project | undefined {
-  return projects.find((p) => p.slug === slug);
+  return visibleProjects.find((p) => p.slug === slug);
 }

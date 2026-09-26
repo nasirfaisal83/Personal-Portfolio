@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { HeroScreen } from "./HeroScreen";
+import type { HeroMap } from "./heroMap";
 import { Name } from "./Name";
 import { isPlaceholder, site } from "@/content/site";
 
@@ -10,7 +11,7 @@ import { isPlaceholder, site } from "@/content/site";
  * any width from 360px. R2.5 — activating a map node scrolls to that project's
  * section and moves focus to its heading.
  */
-export function Hero({ resumeAvailable }: { resumeAvailable: boolean }) {
+export function Hero({ resumeAvailable, map }: { resumeAvailable: boolean; map: HeroMap }) {
   const showTagline = !isPlaceholder(site.tagline);
 
   const goToProject = useCallback((slug: string) => {
@@ -48,7 +49,7 @@ export function Hero({ resumeAvailable }: { resumeAvailable: boolean }) {
           </div>
         </div>
         <div className="hero__panel">
-          <HeroScreen onSelectProject={goToProject} />
+          <HeroScreen map={map} onSelectProject={goToProject} />
         </div>
       </div>
     </section>

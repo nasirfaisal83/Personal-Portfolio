@@ -5,7 +5,7 @@ import { site } from "@/content/site";
 import { experience } from "@/content/experience";
 
 describe("content-check", () => {
-  it("accepts exactly the five slugs", () => {
+  it("accepts exactly the six slugs", () => {
     expect(checkSlugs(projectSlugs)).toEqual([]);
     expect(checkSlugs([...EXPECTED_SLUGS].reverse())).toEqual([]);
   });
@@ -35,7 +35,10 @@ describe("content shape", () => {
       expect(project.stackTable.length).toBeGreaterThan(0);
       expect(project.howItWorks.length).toBeGreaterThanOrEqual(2);
       expect(project.highlights.length).toBeGreaterThan(0);
-      expect(project.github.startsWith("https://github.com/nasirfaisal83/")).toBe(true);
+      // A project without `github` is a private client project.
+      if (project.github) {
+        expect(project.github.startsWith("https://github.com/nasirfaisal83/")).toBe(true);
+      }
     }
   });
 

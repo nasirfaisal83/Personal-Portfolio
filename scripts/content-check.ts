@@ -2,7 +2,10 @@
  * Content integrity gate (R15.2, R15.3, R9.3). Runs from `prebuild`.
  *
  * - Fails when any TODO_ token survives in src/content during a production build.
- * - Fails when the project slug set is not exactly the five in requirements §2.
+ * - Fails when the project slug set is not exactly the six: the five in
+ *   requirements §2, plus the Salon Appointment System.
+ * - Fails when every project is hidden (`visible: false`): the page would have
+ *   an empty Projects section.
  * - Warns when public/resume.pdf is missing (the UI then hides every resume control).
  */
 import { readdirSync, readFileSync, existsSync } from "node:fs";
@@ -13,6 +16,7 @@ const CONTENT_DIR = join(ROOT, "src", "content");
 const RESUME = join(ROOT, "public", "resume.pdf");
 
 export const EXPECTED_SLUGS = [
+  "salon",
   "rag-document-qa",
   "order-saga",
   "tech-news-agent",
@@ -45,9 +49,19 @@ export function checkSlugs(slugs: readonly string[]): string[] {
   const expected = [...EXPECTED_SLUGS].sort();
   const actual = [...slugs].sort();
   if (expected.length !== actual.length || expected.some((s, i) => s !== actual[i])) {
-    return [`Project slugs must be exactly ${expected.join(", ")} — found ${actual.join(", ")}`];
+    return [
+      `Project slugs must be exactly ${expected.join(", ")} — found ${actual.join(", ")}. ` +
+        "To take a project off the site, set `visible: false` on it instead of deleting it.",
+    ];
   }
   return [];
+}
+
+export function checkVisible(projects: readonly { visible: boolean }[]): string[] {
+  if (projects.some((project) => project.visible)) return [];
+  return [
+    "Every project is hidden — set `visible: true` on at least one in src/content/projects.ts.",
+  ];
 }
 
 function readContentFiles(): { file: string; text: string }[] {
@@ -76,10 +90,11 @@ async function run(): Promise<CheckResult> {
     }
   }
 
-  const { projectSlugs } = (await import(join(CONTENT_DIR, "projects.ts"))) as {
+  const { projectSlugs, projects } = (await import(join(CONTENT_DIR, "projects.ts"))) as {
     projectSlugs: string[];
+    projects: { visible: boolean }[];
   };
-  errors.push(...checkSlugs(projectSlugs));
+  errors.push(...checkSlugs(projectSlugs), ...checkVisible(projects));
 
   if (!existsSync(RESUME)) {
     warnings.push("public/resume.pdf is missing — every “Download resume” control will be hidden.");

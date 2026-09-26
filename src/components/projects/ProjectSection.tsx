@@ -21,9 +21,13 @@ export function ProjectSection({ project }: { project: Project }) {
           <p className="t-body measure">{project.stack.join(", ")}</p>
         </div>
         <p className="project__links">
-          <a href={project.github} target="_blank" rel="noopener noreferrer">
-            View on GitHub
-          </a>
+          {project.github ? (
+            <a href={project.github} target="_blank" rel="noopener noreferrer">
+              View on GitHub
+            </a>
+          ) : (
+            <span className="t-caption">Private client project</span>
+          )}
           <TransitionLink href={`/projects/${project.slug}/`}>Read the case study</TransitionLink>
         </p>
       </div>

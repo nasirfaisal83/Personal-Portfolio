@@ -9,6 +9,36 @@ Reviewer sign-off: _pending_ — see task 5.2.
 
 ---
 
+## Salon Appointment System — `src/components/screens/salon/`
+
+A private client project, so its source is not a public README but
+`PROJECT-OVERVIEW.md` in the private repository, cited here by section. Its §17
+asks that the client stay unnamed and that no figure be invented; nothing on
+screen names the business.
+
+| Element | Source in PROJECT-OVERVIEW.md |
+|---|---|
+| Customer, `no account` | §2 Roles |
+| A second Customer, `same slot` | §9: two customers tapping the same slot at the same moment |
+| `Next.js 16`, `App Router` | §1 Stack, §3 System context |
+| `Spring Boot 4.1`, `BookingService` | §1 Stack; §6 ("customer books (BookingService)") |
+| `PostgreSQL 16`, `btree_gist` | §1 Stack |
+| `SMS gateway` | §3 System context, §11 |
+| Stylist, `dashboard` | §2 Roles |
+| `expiry worker`, `@60s` | §6: REQUESTED → EXPIRED by the expiry worker, @60s |
+| `GET /availability`, `hours − time off − busy`, `[slot, slot…]` | §7.1, §8 |
+| `POST /booking/otp/request`, `code`, `POST /booking/otp/verify`, `remembered-phone cookie` | §7.1 |
+| `POST /booking`, `INSERT + FLUSH`, `Pending`, `new request` | §7.1 steps 1–8 |
+| `approve`, `CONFIRMED`, `signed manage link`, reminders scheduled | §6 Transitions in full |
+| `availability check ✓`, `exclusion constraint`, `23P01`, `409 SLOT_CONFLICT` | §9 (1), §7.1 |
+| `…/{token}/reschedule` (`POST /api/manage/{token}/reschedule`), `INSERT new row`, `original` / `replacement`, `new manage link` | §7.2 |
+| `conditional UPDATE`, `EXPIRED`, `deliberately silent` | §6 ("None — deliberately silent"), §9 (3) |
+| The seven states `REQUESTED CONFIRMED COMPLETED DECLINED EXPIRED CANCELLED NO_SHOW` | §6 |
+| `private client project` | §17: built solo for a real client, running in production |
+
+No throughput, booking volume or user figures appear, because the document
+states none (§17).
+
 ## Order-Saga — `src/components/screens/order-saga/`
 
 | Element | Source in the README |

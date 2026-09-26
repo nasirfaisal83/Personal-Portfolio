@@ -1,6 +1,6 @@
 # Faisal Nasir — portfolio website
 
-A static portfolio that does not describe five GitHub projects, it runs them.
+A static portfolio that does not describe its six projects, it runs them.
 Each project is a small animated system faithful to the architecture in its own
 README, and the visitor can drive it: place an order, fail a payment, ask a
 question, broadcast an alert.
@@ -54,10 +54,33 @@ docs/readme-trace.md       every on-screen element traced to its README
 `src/content/*` is the only place facts live. Components contain no factual
 copy, so summaries, stack lists and dates can be edited without touching a
 component. `scripts/content-check.ts` runs from `prebuild`. It always fails if the project
-slug set is not exactly the five in the requirements, and it fails on a
+slug set is not exactly the six projects (the five in the requirements plus
+the Salon Appointment System), and it fails on a
 surviving `TODO_` placeholder when `NODE_ENV=production` — so placeholders warn
 while you develop and block the production build. CI enforces that gate on
 `main` only, which keeps pull requests green until the inputs below land.
+
+### Hiding, showing and editing a project
+
+Everything is in `src/content/projects.ts`. After a change, run `npm run build`
+and deploy `out/`.
+
+- **Hide:** set `visible: false` on the project. It leaves the whole site: its
+  section, its `/projects/<slug>/` page, its hero-map node, the sitemap, the
+  Skills captions and the project counts in the copy.
+- **Show again:** set it back to `visible: true`. Nothing is lost while it is
+  hidden.
+- **Edit:** change `title`, `github`, `systemSummary`, `summary`, `stack`,
+  `stackTable`, `howItWorks` or `highlights`.
+- **Reorder:** move the entry. The list order is the order on the page.
+- **Private project:** leave out `github`. The project shows "Private client
+  project" instead of a GitHub link. The Salon Appointment System is one: its
+  facts come from its private repository's `PROJECT-OVERVIEW.md`, and the
+  client is never named.
+
+Don't delete an entry, and don't change `slug` or `screen`. The build expects
+all six projects to be in the file, and it stops if every one of them is
+hidden.
 
 ## Still needed
 

@@ -60,11 +60,18 @@ export function CaseStudy({ project }: { project: Project }) {
         <h2 className="t-h3" id={`source-${project.slug}`}>
           Source
         </h2>
-        <p className="t-body">
-          <a href={project.github} target="_blank" rel="noopener noreferrer">
-            View on GitHub
-          </a>
-        </p>
+        {project.github ? (
+          <p className="t-body">
+            <a href={project.github} target="_blank" rel="noopener noreferrer">
+              View on GitHub
+            </a>
+          </p>
+        ) : (
+          <p className="t-body measure">
+            Private repository — built solo for a real client and running in production. The client
+            is not named.
+          </p>
+        )}
       </section>
     </article>
   );

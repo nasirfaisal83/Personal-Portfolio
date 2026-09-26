@@ -16,8 +16,11 @@ import { scene as agentScene } from "@/components/screens/tech-news-agent/scene"
 import { scenarios as agentScenarios } from "@/components/screens/tech-news-agent/scenarios";
 import { scene as stompScene } from "@/components/screens/emergency-alert-system/scene";
 import { scenarios as stompScenarios } from "@/components/screens/emergency-alert-system/scenarios";
+import { scene as salonScene } from "@/components/screens/salon/scene";
+import { scenarios as salonScenarios } from "@/components/screens/salon/scenarios";
 
 const screens: { name: string; scene: Scene; scenarios: Scenario[] }[] = [
+  { name: "salon", scene: salonScene, scenarios: salonScenarios },
   { name: "order-saga", scene: sagaScene, scenarios: sagaScenarios },
   { name: "rag-document-qa", scene: ragScene, scenarios: ragScenarios },
   { name: "tech-news-agent", scene: agentScene, scenarios: agentScenarios },
@@ -163,5 +166,55 @@ describe("rag-document-qa", () => {
     expect(ask).toBeDefined();
     if (!ask) return;
     expect(ask.steps.some((s) => s.kind === "set" && s.target === "answer.sources")).toBe(true);
+  });
+});
+
+describe("Salon Appointment System", () => {
+  const byId = (id: string) => {
+    const scenario = salonScenarios.find((s) => s.id === id);
+    if (!scenario) throw new Error(`no scenario ${id}`);
+    return scenario;
+  };
+
+  it("books through the OTP flow and ends CONFIRMED", () => {
+    const book = byId("book");
+    const labels = book.steps.flatMap((s) => (s.kind === "packet" && s.label ? [s.label] : []));
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        "POST /booking/otp/request",
+        "POST /booking/otp/verify",
+        "POST /booking",
+      ]),
+    );
+    expect(endState(salonScene, book).status.db.value).toBe("CONFIRMED");
+  });
+
+  it("lets the exclusion constraint turn the second of two bookings into 409 SLOT_CONFLICT", () => {
+    const end = endState(salonScene, byId("race"));
+    expect(end.status.db.value).toBe("REQUESTED");
+    expect(end.values["conflict.B"]).toBe(true);
+    expect(end.values["constraint"]).toBe("blocked");
+  });
+
+  it("keeps the original CONFIRMED until the replacement is approved", () => {
+    const reschedule = byId("reschedule");
+    const cancelled = reschedule.steps.findIndex(
+      (s) => s.kind === "set" && s.target === "original" && s.value === "CANCELLED",
+    );
+    const approved = reschedule.steps.findIndex(
+      (s) => s.kind === "set" && s.target === "replacement" && s.value === "CONFIRMED",
+    );
+    expect(approved).toBeGreaterThan(-1);
+    expect(cancelled).toBeGreaterThan(approved);
+    const end = endState(salonScene, reschedule);
+    expect(end.values["original"]).toBe("CANCELLED");
+    expect(end.values["replacement"]).toBe("CONFIRMED");
+  });
+
+  it("expires a request without sending anything", () => {
+    const expire = byId("expire");
+    expect(endState(salonScene, expire).status.db.value).toBe("EXPIRED");
+    const smsEdges = new Set(["api-sms", "sms-a", "sms-stylist"]);
+    expect(expire.steps.some((s) => s.kind === "packet" && smsEdges.has(s.edge))).toBe(false);
   });
 });

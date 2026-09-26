@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Faisal Nasir's portfolio. It is a statically exported Next.js 15 / React 19 site. Instead of describing five GitHub projects, it runs each one as a small animated system diagram that the visitor can drive (place an order, fail a payment, ask a question, and so on). Every factual claim, and everything drawn on a screen, must be traceable to PRD v2 or to that project's own README.
+Faisal Nasir's portfolio. It is a statically exported Next.js 15 / React 19 site. Instead of describing six projects (five public GitHub repositories and one private client project), it runs each one as a small animated system diagram that the visitor can drive (place an order, fail a payment, ask a question, and so on). Every factual claim, and everything drawn on a screen, must be traceable to PRD v2 or to that project's own README.
 
 Code comments cite `R<n>.<m>` (requirements.md), `design §<n>` (design.md), task numbers (tasks.md) and "PRD v2". **None of these specs are in the repo.** Keep the citations when you edit code. If a change depends on what a spec says, ask the user instead of guessing.
 
@@ -34,9 +34,10 @@ Playwright has two projects: `chromium-wide` (1440×900) and `chromium-narrow` (
 
 Writing e2e tests:
 - Wait for `hydrated(page)` from `tests/e2e/hydrated.ts` before clicking anything. Until React hydrates, buttons have no handlers.
+- Take project slugs and titles from `tests/e2e/content.ts` (`visibleSlugs`, `visibleTitles`). A test about one project calls `test.skip(!onSite(slug), …)`, so hiding a project never fails the suite.
 - For reduced motion, call `page.emulateMedia({ reducedMotion: "reduce" })`. `test.use({ reducedMotion })` doesn't reach `matchMedia` in this setup.
 
-Production content gate (in CI this runs only on `main`): `NODE_ENV=production npm run content-check`. It fails while any `TODO_*` token remains in `src/content/*.ts`. Lighthouse: `npx lhci autorun` against `out/`, with every category at ≥ 0.9, LCP ≤ 2.5s and CLS ≤ 0.1.
+Production content gate (in CI this runs only on `main`): `NODE_ENV=production npm run content-check`. It fails while any `TODO_*` token remains in `src/content/*.ts`. Lighthouse: `npx lhci autorun` against `out/`, with every category at ≥ 0.9, LCP ≤ 2.5s and CLS ≤ 0.1. `lighthouserc.cjs` audits whichever case-study page was exported: `order-saga` if it's visible, otherwise the first one.
 
 CI (`.github/workflows/ci.yml`, Node 20) runs, in order: lint → typecheck → unit → build → prod content gate (main only) → bundle-check → e2e → Lighthouse.
 
@@ -46,13 +47,31 @@ CI (`.github/workflows/ci.yml`, Node 20) runs, in order: lint → typecheck → 
 `next.config.mjs` sets `output: "export"`, `trailingSlash: true` and unoptimized images. There is no server runtime, so there are no API routes, server actions, middleware or on-demand dynamic routes. Case-study pages come from `generateStaticParams`. Server-only code runs only at build time; for example, `src/lib/resume.ts` uses `existsSync` to hide every resume control when `public/resume.pdf` is missing. `NEXT_PUBLIC_SITE_URL` sets the canonical, sitemap and Open Graph origin (see `src/lib/metadata.ts`).
 
 ### Content layer: `src/content/`
-Facts live only here, in `site.ts`, `projects.ts`, `experience.ts` and `skills.ts`. Components contain no factual copy. Project `summary` and `stack` are quoted verbatim from the READMEs. `howItWorks` may only recombine statements already present in the file. Unfilled values are `TODO_*` strings, and components check them with `isPlaceholder()` from `site.ts`. The set of project slugs is fixed at exactly five (`EXPECTED_SLUGS` in `scripts/content-check.ts`), and the build fails if it changes.
+Facts live only here, in `site.ts`, `projects.ts`, `experience.ts` and `skills.ts`. Components contain no factual copy. Project `summary` and `stack` are quoted verbatim from the READMEs. `howItWorks` may only recombine statements already present in the file. Unfilled values are `TODO_*` strings, and components check them with `isPlaceholder()` from `site.ts`. The set of project slugs is fixed at exactly six (`EXPECTED_SLUGS` in `scripts/content-check.ts`), and the build fails if it changes.
+
+The Salon Appointment System (`salon`) is a private client project:
+- It has no `github`, so the UI shows "Private client project".
+- Its facts come from `PROJECT-OVERVIEW.md` in its private repository, not a README; `docs/readme-trace.md` cites it by section.
+- That document's §17 binds this site: never name the client or its business, and never invent a figure it doesn't state.
+- The portfolio repo is public, so this matters.
+
+Each project has a `visible` flag. The owner hides and shows projects by editing it; the how-to is in the README and at the top of `projects.ts`. Rules for code:
+- Anything a visitor sees reads `visibleProjects`, never `projects`. That covers:
+  - the Projects section, the case-study routes and the sitemap;
+  - the Skills captions (`lib/skillsIndex.ts`);
+  - the hero map, via `visibleHeroScene`, `visibleHeroNodes` and `visibleHeroAscii` in `hero/heroMap.ts`;
+  - the counts in the copy (`countWord` in `lib/count.ts`);
+  - the site description (`describeSite` in `site.ts`).
+- `projects` and `projectSlugs` stay the full list, for the content check and for tests.
+- `getProject` returns only visible projects.
+- The build fails if every project is hidden.
+- `heroAsciiFor` rebuilds the ASCII intro from its pieces. With the five public projects visible and Salon hidden, it must equal the original drawing; `tests/unit/visibility.test.ts` pins it, and the original description too.
 
 ### README fidelity
 Every label, topic name, status and number drawn on a project screen must come from that project's README. `docs/readme-trace.md` maps each on-screen element to its README source. If you add or change something on a screen, update that file. Any value the README does not document (for example the tech-news-agent first-pass confidence `0.52`) must be captioned "illustrative" in the UI and marked as illustrative in the trace. Some of these rules are enforced by tests, such as the allowed Order-Saga packet labels.
 
 ### Screen engine: `src/components/screens/engine/`
-One engine drives all five screens:
+One engine drives all six screens:
 - `types.ts`: a `Scene` (nodes, edges, and an optional `narrow` layout) and a `Scenario` (a timeline of typed `Step`s: `packet`, `pulse`, `status`, `set`, `morph`, `say`, plus a `narration` string list).
 - `schedule.ts`: a **pure** scheduler with no DOM and no React (`tick`, `endState`, `scenarioDuration`). Pausing just stops `elapsed` from growing. At most 6 packets are in flight (3 on slow devices). In reduced motion, packets are skipped and one step is applied every 150ms.
 - `geometry.ts`: packet paths are polyline arithmetic, not `SVGPathElement.getPointAtLength`, so they can be tested without a DOM and rendered during the static export.

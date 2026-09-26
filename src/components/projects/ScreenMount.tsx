@@ -9,6 +9,7 @@ import type { ScreenId } from "@/content/projects";
  * diagram is visible before hydration and with JavaScript off.
  */
 const screens = {
+  salon: dynamic(() => import("../screens/salon/SalonScreen")),
   "order-saga": dynamic(() => import("../screens/order-saga/OrderSagaScreen")),
   rag: dynamic(() => import("../screens/rag-document-qa/RagScreen")),
   agents: dynamic(() => import("../screens/tech-news-agent/AgentsScreen")),

@@ -232,11 +232,7 @@ export function ResponsiveStage({
         <svg
           key={key}
           {...svg}
-          className={[
-            "screen__stage",
-            pending ? `screen__stage--${key}` : null,
-            className,
-          ]
+          className={["screen__stage", pending ? `screen__stage--${key}` : null, className]
             .filter(Boolean)
             .join(" ")}
           viewBox={`0 0 ${variant.viewBox[0]} ${variant.viewBox[1]}`}

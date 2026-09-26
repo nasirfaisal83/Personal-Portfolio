@@ -1,14 +1,10 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { onSite, visibleSlugs as SLUGS } from "./content";
 import { hydrated } from "./hydrated";
 
-const SLUGS = [
-  "order-saga",
-  "rag-document-qa",
-  "tech-news-agent",
-  "emergency-alert-system",
-  "con-detection",
-];
+/** The project a single-page test uses: its usual one if that is on the site. */
+const preferred = (slug: string) => (onSite(slug) ? slug : SLUGS[0]);
 
 test.describe("case-study routes", () => {
   for (const slug of SLUGS) {
@@ -24,18 +20,20 @@ test.describe("case-study routes", () => {
   }
 
   test("back and forward navigation works", async ({ page }) => {
+    // The first "Read the case study" link belongs to the first project on the page.
+    const first = new RegExp(`/projects/${SLUGS[0]}/?$`);
     await page.goto("/");
-    await page.locator("#project-order-saga").scrollIntoViewIfNeeded();
+    await page.locator(`#project-${SLUGS[0]}`).scrollIntoViewIfNeeded();
     await page.getByRole("link", { name: "Read the case study" }).first().click();
-    await expect(page).toHaveURL(/\/projects\/order-saga\/?$/);
+    await expect(page).toHaveURL(first);
     await page.goBack();
     await expect(page).toHaveURL(/\/$/);
     await page.goForward();
-    await expect(page).toHaveURL(/\/projects\/order-saga\/?$/);
+    await expect(page).toHaveURL(first);
   });
 
   test("a case study passes an axe scan", async ({ page }) => {
-    await page.goto("/projects/rag-document-qa/");
+    await page.goto(`/projects/${preferred("rag-document-qa")}/`);
     await page.waitForTimeout(1500);
     const results = await new AxeBuilder({ page }).analyze();
     const serious = results.violations.filter(
@@ -90,13 +88,13 @@ test.describe("responsive", () => {
     const hidden = await page
       .locator(".screen__controls")
       .evaluateAll((rows) => rows.map((row) => row.scrollWidth - row.clientWidth));
-    expect(hidden).toHaveLength(5);
+    expect(hidden).toHaveLength(SLUGS.length);
     for (const extra of hidden) expect(extra).toBeLessThanOrEqual(1);
   });
 
   test("a case study doesn't shift as it hydrates at 390px", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/projects/order-saga/");
+    await page.goto(`/projects/${preferred("order-saga")}/`);
     await hydrated(page);
     await page.waitForTimeout(500);
     const shift = await page.evaluate(
@@ -138,14 +136,18 @@ test.describe("responsive", () => {
   // Each scenario ends with its widest artwork on screen: the cards, the answer
   // terminal, the stock label. None of its text may run past the stage.
   const endings = [
+    { slug: "salon", button: "Two customers, one slot", text: "409 SLOT_CONFLICT" },
+    { slug: "salon", button: "Reschedule", text: "replacement CONFIRMED" },
     { slug: "order-saga", button: "Fail payment", text: "stock released" },
     { slug: "rag-document-qa", button: "Ask a question", text: "Chunk 7, page 2" },
     { slug: "tech-news-agent", button: "Run pipeline", text: "[UNVERIFIED]" },
     { slug: "emergency-alert-system", button: "Broadcast an alert", text: "Fire in Berlin" },
-  ];
+  ].filter((ending) => onSite(ending.slug));
   for (const width of [390, 1440]) {
     for (const ending of endings) {
-      test(`${ending.slug} keeps its text inside the stage at ${width}px`, async ({ page }) => {
+      test(`${ending.slug} "${ending.button}" keeps its text inside the stage at ${width}px`, async ({
+        page,
+      }) => {
         await page.emulateMedia({ reducedMotion: "reduce" });
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/");
@@ -191,8 +193,8 @@ test.describe("without JavaScript", () => {
           .filter((stage) => getComputedStyle(stage).display !== "none")
           .map((stage) => Number(stage.getAttribute("viewBox")?.split(" ")[2])),
       );
-    // The hero map and the five screens, each in its 360-wide layout.
-    expect(shown).toEqual([360, 360, 360, 360, 360, 360]);
+    // The hero map and every project's screen, each in its 360-wide layout.
+    expect(shown).toEqual(Array(SLUGS.length + 1).fill(360));
     await expect(
       page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Skills" }),
     ).toBeVisible();
