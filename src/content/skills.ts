@@ -4,64 +4,51 @@ export interface SkillGroup {
   group: string;
   items: readonly string[];
   /** Groups excluded from project matching carry their own label instead (R7.3). */
-  label?: "Coursework" | "Language";
+  label?:"Language";
 }
 
 export const skills: readonly SkillGroup[] = [
   {
     group: "Languages",
-    items: ["Java", "Python", "C++", "C", "JavaScript", "x86 NASM Assembly", "TypeScript", "SQL"],
+    items: ["Java", "Python", "C++", "JavaScript", "TypeScript", "SQL"],
   },
   {
     group: "Backend",
     items: [
+      "Rest API design",
+      "JWT authentication",
+      "FastAPI",
       "Spring Boot",
       "Spring AI",
       "Spring Cloud (Eureka, Gateway, OpenFeign)",
-      "Spring WebFlux",
-      "Spring Data JPA",
+      "Multithreading & concurrency",
+      "Apache Kafka"
     ],
   },
   {
     group: "AI/LLM engineering",
     items: [
-      "OpenAI GPT-4o / GPT-4o-mini integration",
+      "Spring AI",
+      "vector embeddings",
+      "LLM Orchestration",
+      "Skills & Tools",
+      "MCP",
+      "Spec-driven Development",
+      "Automation Hooks",
+      "Steering Files",
+      "Agentic Loops",
+      "Claude Code",
+      "Kiro",
+      "Codex",
       "Retrieval-Augmented Generation (pgvector)",
       "multi-agent orchestration (ReAct pattern)",
-      "Tavily Search API",
-      "GitHub MCP",
-      "YOLOv5 object detection",
-      "OpenCV",
+      "Tavily Search API"
     ],
   },
-  { group: "Data", items: ["PostgreSQL", "pgvector", "Flyway"] },
+  { group: "Databases", items: ["PostgreSQL","MySQL","MongoDB", "pgvector"] },
   {
-    group: "Messaging & infra",
-    items: ["Apache Kafka", "Docker / Docker Compose", "STOMP protocol", "Boost ASIO"],
-  },
-  {
-    group: "Architecture",
-    items: [
-      "Choreography Saga pattern",
-      "microservices",
-      "idempotent consumers",
-      "optimistic locking",
-      "thread-per-client & reactor concurrency models",
-    ],
-  },
-  {
-    group: "Document processing",
-    items: ["Apache PDFBox", "Tesseract OCR", "Apache POI"],
-  },
-  {
-    group: "Systems programming (coursework)",
-    items: ["C", "x86 NASM assembly", "Unix processes/signals", "ELF format"],
-    label: "Coursework",
-  },
-  {
-    group: "Functional programming (coursework)",
-    items: ["TypeScript", "Ramda", "monads (L3/Scheme)"],
-    label: "Coursework",
+    group: "Systems & DevOps",
+    items: ["Linux","Docker", "Kubernetes", "AWS(IAM,Lambda,EC2,S3,Managed Databases)", "Jenkins", "CI/CD pipelines", "GitHub Actions","Flyway","Maven","Gradle"],
   },
   { group: "Human languages", items: ["Arabic", "Hebrew", "English"], label: "Language" },
 ];

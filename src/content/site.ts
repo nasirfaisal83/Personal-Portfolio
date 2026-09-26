@@ -29,7 +29,7 @@ export const site = {
   ],
   /** Private client projects, described in their own sentence after the public list. */
   descriptionPrivatePhrases: [
-    ["salon", "a salon appointment system, built solo for a real client and running in production"],
+    ["salon", "a salon appointment system, built for a real client and running in production"],
   ],
 } as const;
 
