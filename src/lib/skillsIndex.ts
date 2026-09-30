@@ -1,4 +1,4 @@
-import { projects, visibleProjects, type Project } from "@/content/projects";
+import { visibleProjects, type Project } from "@/content/projects";
 import { skills, type SkillGroup } from "@/content/skills";
 
 /**
@@ -57,9 +57,9 @@ export function captionForSkill(
   if (group.label) return { kind: "label", text: group.label };
   const titles = projectsForSkill(skill, shown);
   if (titles.length > 0) return { kind: "projects", titles };
-  // Used only by hidden projects: name nothing, rather than call it coursework.
-  if (projectsForSkill(skill, projects).length > 0) return { kind: "none" };
-  return { kind: "label", text: "Coursework" };
+  // No project on the site uses it (or only a hidden one does): no caption at
+  // all. The owner chose this over a fallback label such as "Coursework".
+  return { kind: "none" };
 }
 
 export function captionText(caption: SkillCaption): string {

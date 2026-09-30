@@ -1,0 +1,135 @@
+/* About and experience. Imported from globals.css. */
+
+/* ================================================================= about */
+/* A full-width band in the secondary tint. The grid has no bottom padding:
+   the photo column is bottom-aligned, so the arch and photo stand on the
+   band's lower edge, and the copy column carries its own bottom padding. */
+
+.about {
+  background: color-mix(in oklab, var(--secondary) 60%, transparent);
+}
+
+.about__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3rem;
+  align-items: end;
+  padding-top: 6rem;
+}
+
+@media (min-width: 768px) {
+  .about__grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+}
+
+/* ---------------------------------------------------------------- photo */
+
+.about__portrait {
+  position: relative;
+  order: 2;
+  display: flex;
+  justify-content: center;
+}
+
+.about__arch {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  margin-inline: auto;
+  width: 86%;
+  height: 78%;
+  border-radius: 999px 999px 0 0;
+  background: var(--primary);
+}
+
+.about__photo {
+  position: relative;
+  z-index: 10;
+  display: block;
+  width: 80%;
+  max-width: 400px;
+  height: auto;
+}
+
+@media (min-width: 768px) {
+  .about__portrait {
+    order: 1;
+  }
+}
+
+/* ----------------------------------------------------------------- copy */
+
+.about__body {
+  order: 1;
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 768px) {
+  .about__body {
+    order: 2;
+  }
+}
+
+.about__lead {
+  margin: 1.5rem 0 0;
+  font-size: 1.125rem;
+  line-height: 1.625;
+  color: var(--muted-foreground);
+}
+
+.about__text {
+  margin: 1rem 0 0;
+  line-height: 1.625;
+  color: var(--muted-foreground);
+}
+
+/* ----------------------------------------------------------- experience */
+
+.about__exp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about__exp-card {
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--card);
+  padding: 1.25rem;
+}
+
+.about__exp-card p {
+  margin: 0;
+}
+
+.about__exp-role {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.about__exp-org {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--primary);
+}
+
+.about__exp-card .about__exp-detail {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+/* Shown only once a real period replaces the placeholder (R6.2). */
+.about__exp-card .about__exp-period {
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--muted-foreground);
+}

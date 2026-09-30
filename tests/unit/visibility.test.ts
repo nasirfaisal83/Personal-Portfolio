@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { checkVisible } from "../../scripts/content-check";
-import { getProject, projects, visibleProjects } from "@/content/projects";
+import {
+  featuredProject,
+  getProject,
+  gridProjects,
+  projects,
+  splitFeatured,
+  visibleProjects,
+} from "@/content/projects";
 import { describeSite } from "@/lib/metadata";
-import { heroAsciiFor, heroScene, heroSceneFor } from "@/components/hero/heroMap";
 import { countWord, plural } from "@/lib/count";
 
 const ALL = projects.map((p) => p.slug);
@@ -10,16 +16,7 @@ const ALL = projects.map((p) => p.slug);
 const FIVE = ALL.filter((slug) => slug !== "salon");
 const without = (...hidden: string[]) => new Set(ALL.filter((slug) => !hidden.includes(slug)));
 
-// The drawing and the sentence as they were before projects could be hidden.
-const ORIGINAL_ASCII = `                  rag-document-qa
-                        │
-   order-saga ──────────┼────────── tech-news-agent
-                        │
-                   ┌────┴────┐
-                   │portfolio│
-                   └────┬────┘
-                        │
- emergency-alert-system ┴──────────── con-detection`;
+// The sentence as it was before projects could be hidden.
 const ORIGINAL_DESCRIPTION =
   "CS student at Ben-Gurion University of the Negev, teaching assistant, and Hasoub on-campus community manager. Five public projects: RAG document Q&A, a choreography saga, a multi-agent news pipeline, a STOMP alert system, and YOLOv5 cone detection.";
 
@@ -58,7 +55,7 @@ describe("site description", () => {
 
   it("adds a private client sentence when Salon is on the site", () => {
     expect(describeSite(ALL)).toBe(
-      `${ORIGINAL_DESCRIPTION} One private client project: a salon appointment system, built solo for a real client and running in production.`,
+      `${ORIGINAL_DESCRIPTION} One private client project: a salon appointment system, built for a real client and running in production.`,
     );
   });
 
@@ -76,45 +73,45 @@ describe("site description", () => {
   });
 });
 
-describe("hero map", () => {
-  it("draws the original README art for the five public projects", () => {
-    expect(heroAsciiFor(new Set(FIVE))).toBe(ORIGINAL_ASCII);
+describe("featured card and grid", () => {
+  it("features the first visible project that has steps", () => {
+    const first = visibleProjects.find((p) => (p.steps?.length ?? 0) > 0);
+    expect(featuredProject).toBe(first);
+    if (featuredProject) expect(featuredProject.visible).toBe(true);
   });
 
-  it("hangs Salon under the lower junction", () => {
-    expect(heroAsciiFor(new Set(ALL))).toBe(
-      `${ORIGINAL_ASCII.replace("system ┴", "system ┼")}\n${" ".repeat(24)}│\n${" ".repeat(22)}salon`,
+  it("puts every other visible project in the grid, in list order", () => {
+    expect(gridProjects).toEqual(visibleProjects.filter((p) => p !== featuredProject));
+    expect(gridProjects.every((p) => p.visible)).toBe(true);
+    const shown = [...(featuredProject ? [featuredProject] : []), ...gridProjects].map(
+      (p) => p.slug,
     );
-    const alone = heroAsciiFor(new Set(["salon"])).split("\n");
-    expect(alone.at(-1)).toBe(`${" ".repeat(22)}salon`);
-    expect(alone.join("\n")).not.toMatch(/emergency|con-detection|rag|order|tech/);
+    expect([...shown].sort()).toEqual(visibleProjects.map((p) => p.slug).sort());
+    expect(new Set(shown).size).toBe(shown.length);
   });
 
-  it("removes a hidden project's label and redraws the junctions", () => {
-    const noRag = heroAsciiFor(without("rag-document-qa")).split("\n");
-    expect(noRag[0]).toBe("   order-saga ──────────┬────────── tech-news-agent");
-    expect(noRag.join("\n")).not.toContain("rag-document-qa");
-
-    const leftOnly = heroAsciiFor(new Set(["order-saga", "emergency-alert-system"]));
-    expect(leftOnly).toContain("   order-saga ──────────┐");
-    expect(leftOnly).toContain(" emergency-alert-system ┘");
-    expect(leftOnly).not.toMatch(/tech-news-agent|con-detection|rag-document-qa/);
+  it("puts every visible project in the grid when none has steps", () => {
+    const stepless = visibleProjects.map((p) => ({ ...p, steps: undefined }));
+    const { featured, grid } = splitFeatured(stepless);
+    expect(featured).toBeUndefined();
+    expect(grid).toEqual(stepless);
   });
 
-  it("closes the hub box on a side with nothing left", () => {
-    const top = heroAsciiFor(new Set(["rag-document-qa"])).split("\n");
-    expect(top.at(-1)).toBe("                   └─────────┘");
-    const bottom = heroAsciiFor(new Set(["con-detection"])).split("\n");
-    expect(bottom[0]).toBe("                   ┌─────────┐");
-    expect(bottom.at(-1)).toBe("                        └──────────── con-detection");
+  it("treats an empty step list as no steps", () => {
+    const [first, ...rest] = visibleProjects;
+    const list = [{ ...first, steps: [] }, ...rest];
+    const withSteps = rest.find((p) => (p.steps?.length ?? 0) > 0);
+    expect(splitFeatured(list).featured).toBe(withSteps);
   });
 
-  it("takes a hidden project's node and edge out of both layouts", () => {
-    const scene = heroSceneFor(without("order-saga"));
-    expect(scene.nodes.map((n) => n.id)).not.toContain("order-saga");
-    expect(scene.narrow?.nodes.map((n) => n.id)).not.toContain("order-saga");
-    expect(scene.edges.map((e) => e.from)).not.toContain("order-saga");
-    expect(scene.nodes.map((n) => n.id)).toContain("portfolio");
-    expect(scene.nodes).toHaveLength(heroScene.nodes.length - 1);
+  it("features the next project with steps when the first one is hidden", () => {
+    const withSteps = projects.filter((p) => (p.steps?.length ?? 0) > 0);
+    const hidden = withSteps[0];
+    if (!hidden) return;
+    const onSite = projects.filter((p) => p.visible && p !== hidden);
+    const { featured, grid } = splitFeatured(onSite);
+    expect(featured).toBe(withSteps.find((p) => p !== hidden && p.visible));
+    expect(grid).not.toContain(hidden);
+    expect(grid.length + (featured ? 1 : 0)).toBe(onSite.length);
   });
 });

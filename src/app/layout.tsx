@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { RevealObserver } from "@/components/ui/RevealObserver";
 import { fontVariables } from "@/lib/fonts";
 import { buildMetadata, personJsonLd } from "@/lib/metadata";
 import "@/styles/globals.css";
@@ -9,7 +10,7 @@ import "@/styles/globals.css";
 export const metadata: Metadata = buildMetadata();
 
 export const viewport: Viewport = {
-  themeColor: "#ECEFF3",
+  themeColor: "#F7F7F5",
   width: "device-width",
   initialScale: 1,
 };
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <main id="main">{children}</main>
         <Footer />
+        <RevealObserver />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}

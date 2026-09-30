@@ -7,13 +7,18 @@ function stageText(scope: Locator, text: string) {
   return scope.locator("svg text").filter({ hasText: new RegExp(`^${text}$`) });
 }
 
+/**
+ * The diagrams run on the case-study pages only. Opens one and returns the
+ * block around its screen, which holds the stage, the scenario buttons and
+ * the narration.
+ */
 async function openScreen(page: Page, slug: string) {
-  await page.goto("/");
+  await page.goto(`/projects/${slug}/`);
   // Clicking before hydration does nothing, so wait until React has taken over.
   await hydrated(page);
-  const heading = page.locator(`#project-${slug}`);
-  await heading.scrollIntoViewIfNeeded();
-  return page.locator(".project", { has: heading });
+  const section = page.locator(".case__screen");
+  await section.scrollIntoViewIfNeeded();
+  return section;
 }
 
 test.describe("project screens", () => {
@@ -51,12 +56,12 @@ test.describe("project screens", () => {
   });
 
   test("every screen exposes its narration as text", async ({ page }) => {
-    await page.goto("/");
     for (const slug of visibleSlugs) {
       const section = await openScreen(page, slug);
       await section.getByRole("button", { name: "Show as text" }).click();
       await expect(section.locator("ol li").first()).toBeVisible();
       await section.getByRole("button", { name: "Hide text" }).click();
+      await expect(section.locator("ol li").first()).toBeHidden();
     }
   });
 
@@ -102,11 +107,8 @@ test.describe("reduced motion", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
   });
 
-  test("skips the hero sequence and steps scenarios through their states", async ({ page }) => {
+  test("steps scenarios through their states without packets", async ({ page }) => {
     test.skip(!onSite("order-saga"), "order-saga is hidden");
-    await page.goto("/");
-    await expect(page.locator(".hero__ascii")).toHaveCount(0);
-
     const section = await openScreen(page, "order-saga");
     await expect(section.getByRole("button", { name: "Play with motion" })).toBeVisible();
     await section.getByRole("button", { name: "Place order" }).click();

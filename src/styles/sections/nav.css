@@ -1,0 +1,271 @@
+/* Nav, skip link and footer. Imported from globals.css.
+   The bar follows the Lovable prototype: 64px tall, translucent page colour
+   with a blur, a faint hairline, the "first.last" wordmark, muted section
+   links and a solid "Email me" pill. */
+
+/* ============================================================== skip link */
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: -9999px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 9999px;
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: var(--shadow-elegant);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 0.75rem;
+  color: var(--background);
+}
+
+/* The global focus ring rule (globals.css) resets the radius; keep the pill. */
+.skip-link:focus-visible {
+  border-radius: 9999px;
+}
+
+/* ===================================================================== nav */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  background: var(--background);
+  background: color-mix(in oklab, var(--background) 80%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: var(--nav-height);
+}
+
+.nav__wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav__dot {
+  color: var(--primary);
+}
+
+@media (hover: hover) {
+  .nav__wordmark:hover {
+    color: var(--foreground);
+  }
+}
+
+/* ------------------------------------------------------------ section links */
+
+.nav__links ul {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color var(--t-hover) var(--e-hover);
+}
+
+.nav__links a .icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* R10.2 — the section in view: ink text, a teal underline. */
+.nav__links a[aria-current="true"] {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+@media (hover: hover) {
+  .nav__links a:hover {
+    color: var(--foreground);
+  }
+}
+
+/* ------------------------------------------------------------------ pills */
+/* Both reuse .pill from globals.css, which comes later in the cascade, hence
+   the `.nav` prefix. */
+
+.nav .nav__email {
+  position: relative;
+  flex: none;
+  min-height: 36px;
+  /* .pill has a 1px transparent border; the prototype's pill has none. */
+  padding: calc(0.5rem - 1px) calc(1rem - 1px);
+  white-space: nowrap;
+}
+
+/* The pill draws at the prototype's 36px; the tap target is 44px. */
+.nav .nav__email::before {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+}
+
+.nav .nav__toggle {
+  display: none;
+  flex: none;
+  min-height: 44px;
+  padding: 0 1rem;
+}
+
+.nav .nav__toggle[aria-expanded="true"] {
+  border-color: var(--foreground);
+}
+
+/* From 768px: the prototype's row. GitHub stays in the phone menu only. */
+@media (min-width: 768px) {
+  .nav__extra {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .nav .nav__email {
+    min-height: 44px;
+    padding-block: 0;
+  }
+
+  .has-js .nav .nav__toggle {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  /* The menu drops down under the bar as a full-width panel. The bar's blur
+     can't reach through to it, so the panel is opaque. */
+  .has-js .nav__links {
+    display: none;
+    position: absolute;
+    inset: 100% 0 auto 0;
+    border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+    box-shadow: 0 16px 32px -20px color-mix(in oklab, var(--foreground) 35%, transparent);
+    padding: 0.25rem var(--gutter) 0.75rem;
+  }
+
+  .has-js .nav__links--open {
+    display: block;
+  }
+
+  .has-js .nav__links ul {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .has-js .nav__links li + li {
+    border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  }
+
+  .has-js .nav__links a {
+    display: flex;
+    min-height: 48px;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    color: var(--foreground);
+  }
+
+  .has-js .nav__links a[aria-current="true"] {
+    color: var(--primary);
+  }
+
+  /* Without JavaScript the toggle can't open anything, so the links stay out
+     as a wrapped row under the wordmark, and the taller bar scrolls away. */
+  body:not(.has-js) .nav {
+    position: static;
+  }
+
+  body:not(.has-js) .nav__inner {
+    flex-wrap: wrap;
+    row-gap: 0;
+    padding-block: 0.625rem 0.25rem;
+  }
+
+  body:not(.has-js) .nav__links {
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  body:not(.has-js) .nav__links ul {
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+  }
+}
+
+/* ================================================================ footer */
+
+.footer {
+  padding-block: 2rem 2.5rem;
+}
+
+.footer__inner {
+  display: flex;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+/* R5.3 — the screen morphs between its home-page card (see .project in
+   projects.css) and its case-study page where the browser supports view
+   transitions, and crossfades everywhere else. */
+.case__screen {
+  view-transition-name: var(--screen-transition, none);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav__links a {
+    transition: none;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 150ms;
+  }
+}

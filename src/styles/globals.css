@@ -1,5 +1,12 @@
 @import "tailwindcss";
 @import "./tokens.css";
+@import "./sections/nav.css";
+@import "./sections/hero.css";
+@import "./sections/projects.css";
+@import "./sections/about.css";
+@import "./sections/skills.css";
+@import "./sections/contact.css";
+@import "./sections/case.css";
 
 /* ---------------------------------------------------------------- reset */
 
@@ -29,14 +36,14 @@ html {
 
 body {
   margin: 0;
-  background: var(--vellum);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans);
-  font-size: var(--size-body);
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.5;
   overflow-wrap: break-word;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  /* Font smoothing and text-rendering stay at the browser default ("auto"), as
+     in the prototype: "antialiased" drew every weight visibly thinner. */
 }
 
 ::selection {
@@ -45,73 +52,14 @@ body {
 }
 
 /* ----------------------------------------------------------------- type */
-/* design §2.2. Sentence case everywhere; one family, five roles. */
+/* Space Grotesk headings, DM Sans text, JetBrains Mono for labels and tags. */
 
 h1,
 h2,
 h3,
 h4 {
-  font-weight: 400;
+  font-weight: 700;
   margin: 0;
-}
-
-.t-name {
-  font-family: var(--font-mono);
-  font-size: var(--size-name);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-.t-h2 {
-  font-family: var(--font-mono);
-  font-size: var(--size-h2);
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-}
-
-.t-h3 {
-  font-family: var(--font-mono);
-  font-size: var(--size-h3);
-  line-height: 1.2;
-}
-
-.t-body {
-  font-family: var(--font-sans);
-  font-size: var(--size-body);
-  line-height: 1.6;
-}
-
-.t-emphasis {
-  font-family: var(--font-sans);
-  font-size: var(--size-body);
-  font-weight: 500;
-  line-height: 1.6;
-}
-
-.t-caption {
-  font-family: var(--font-sans);
-  font-size: var(--size-caption);
-  line-height: 1.5;
-  color: var(--graphite);
-}
-
-/* Reserved for strings that exist in code: topics, frames, enums, ports, keys. */
-.t-identifier {
-  font-family: var(--font-mono);
-  font-size: var(--size-identifier);
-  line-height: 1.4;
-}
-
-.t-tagline {
-  font-family: var(--font-mono);
-  font-style: italic;
-  font-size: var(--size-body);
-  color: var(--graphite);
-}
-
-/* R11.4 — measure never exceeds 70ch. */
-.measure {
-  max-width: 66ch;
 }
 
 p {
@@ -156,11 +104,6 @@ a {
 
 .section {
   padding-block: var(--section-pad);
-  border-top: 1px solid var(--hairline);
-}
-
-.section:first-of-type {
-  border-top: none;
 }
 
 /* R10.2 — headings clear the sticky bar. */
@@ -168,76 +111,36 @@ a {
   scroll-margin-top: calc(var(--nav-height) + 24px);
 }
 
-.stack-8 > * + * {
-  margin-top: 8px;
-}
-.stack-16 > * + * {
-  margin-top: 16px;
-}
-.stack-24 > * + * {
-  margin-top: 24px;
-}
-.stack-40 > * + * {
-  margin-top: 40px;
-}
-
-/* -------------------------------------------------------------- buttons */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: var(--radius-control);
-  border: 1px solid var(--ink);
-  font-family: var(--font-sans);
-  font-size: var(--size-caption);
-  line-height: 1;
-  text-decoration: none;
-  cursor: pointer;
-  background: transparent;
-  color: var(--ink);
-  transition:
-    background-color var(--t-hover) var(--e-hover),
-    color var(--t-hover) var(--e-hover),
-    border-color var(--t-hover) var(--e-hover);
-}
-
-@media (hover: hover) {
-  .btn:hover {
-    background: var(--ink);
-    color: var(--vellum);
-  }
-}
-
-.btn--primary {
-  background: var(--ink);
-  color: var(--vellum);
-}
-
-@media (hover: hover) {
-  .btn--primary:hover {
-    background: var(--signal-deep);
-    border-color: var(--signal-deep);
-    color: var(--vellum);
-  }
-}
-
-.btn-row {
+/* The 404 page, in the same eyebrow / display title / pill language. */
+.not-found {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* R11.4 — measure never exceeds 70ch. */
+.not-found__text {
+  max-width: 66ch;
+  margin-top: 1.5rem;
+  font-size: 1.125rem;
+  line-height: 1.625;
+  color: var(--muted-foreground);
+}
+
+.not-found .pill {
+  margin-top: 2rem;
 }
 
 /* --------------------------------------------------------------- screen */
-/* design §2.3, §6.3. Dark instrument panel sitting as an object on vellum. */
+/* design §2.3, §6.3. Dark instrument panel, set as one of the prototype's dark
+   cards: a mono title strip with a signal dot, and pill-shaped scenario
+   buttons. The panel stays var(--screen), which the diagrams also fill with. */
 
 .screen {
   position: relative;
   background: var(--screen);
   color: var(--screen-ink);
-  border: 1px solid var(--hairline);
+  border: 1px solid color-mix(in oklab, var(--screen-ink) 10%, transparent);
   border-radius: var(--radius-screen);
   box-shadow: inset 0 0 0 1px var(--screen-ring);
   overflow: hidden;
@@ -248,11 +151,30 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(122, 139, 160, 0.25);
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--screen-ink) 10%, transparent);
   font-family: var(--font-mono);
-  font-size: var(--size-identifier);
+  font-size: 0.75rem;
+  line-height: 1rem;
   color: var(--screen-muted);
+}
+
+/* The title: in the panel's ink, after a small signal dot. */
+.screen__strip > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--screen-ink);
+}
+
+.screen__strip > span:first-child::before {
+  content: "";
+  flex: none;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--signal);
 }
 
 .screen__stage {
@@ -277,9 +199,10 @@ a {
 
 .screen__controls {
   display: flex;
-  gap: 8px;
-  padding: 12px 14px;
-  border-top: 1px solid rgba(122, 139, 160, 0.25);
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid color-mix(in oklab, var(--screen-ink) 10%, transparent);
+  background: color-mix(in oklab, var(--screen-ink) 3%, transparent);
   overflow-x: auto;
   scrollbar-width: thin;
 }
@@ -292,26 +215,31 @@ a {
   border-radius: 3px;
 }
 
+/* Scenario buttons and "Show as text": rounded-full pills, 44px tall. */
 .screen-btn {
   flex: 0 0 auto;
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 1.125rem;
   border: 1px solid var(--screen-muted);
-  border-radius: var(--radius-control);
+  border-radius: 9999px;
   background: transparent;
   color: var(--screen-ink);
   font-family: var(--font-sans);
-  font-size: var(--size-caption);
-  line-height: 1;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
   transition:
     border-color var(--t-hover) var(--e-hover),
+    background-color var(--t-hover) var(--e-hover),
     color var(--t-hover) var(--e-hover);
 }
 
-.screen-btn[aria-pressed="true"] {
+.screen-btn[aria-pressed="true"],
+.screen-btn[aria-expanded="true"] {
   border-color: var(--signal);
+  background: color-mix(in oklab, var(--signal) 14%, transparent);
   color: var(--signal);
 }
 
@@ -328,7 +256,7 @@ a {
   .screen__strip {
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
+    gap: 0.25rem;
   }
 
   .screen__controls {
@@ -338,27 +266,42 @@ a {
 }
 
 .screen__text {
-  padding: 12px 14px 16px;
-  border-top: 1px solid rgba(122, 139, 160, 0.25);
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid color-mix(in oklab, var(--screen-ink) 10%, transparent);
   font-family: var(--font-sans);
-  font-size: var(--size-caption);
-  color: var(--screen-ink);
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: color-mix(in oklab, var(--screen-ink) 85%, transparent);
 }
 
 .screen__text ol {
-  margin: 8px 0 0;
-  padding-left: 20px;
+  margin: 0;
+  padding-inline-start: 1.5rem;
+  list-style: decimal;
 }
 
 .screen__text li + li {
-  margin-top: 4px;
+  margin-top: 0.375rem;
+}
+
+.screen__text li::marker {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--signal);
 }
 
 .screen__note {
-  padding: 12px 14px;
-  border-top: 1px solid rgba(122, 139, 160, 0.25);
+  padding: 1rem 1.25rem;
+  border-top: 1px solid color-mix(in oklab, var(--screen-ink) 10%, transparent);
   color: var(--screen-muted);
-  font-size: var(--size-caption);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-btn {
+    transition: none;
+  }
 }
 
 /* JS-off note: hidden the moment the runtime mounts (design §14). */
@@ -390,463 +333,191 @@ a {
   border: 0;
 }
 
-.hairline {
-  border: 0;
-  border-top: 1px solid var(--hairline);
-  margin: 0;
+/* ----------------------------------------------------------- primitives */
+/* Shared pieces of the design: section eyebrows and titles, mono tags, pill
+   buttons, and the load / scroll motion. Sections style everything else in
+   their own file under styles/sections/. */
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
 }
 
-/* ============================================================== skip link */
-
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  z-index: 100;
-  padding: 12px 18px;
-  background: var(--ink);
-  color: var(--vellum);
-  text-decoration: none;
-}
-
-.skip-link:focus {
-  left: 0;
-}
-
-/* ===================================================================== nav */
-
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: var(--vellum);
-  border-bottom: 1px solid transparent;
-  transition: border-color var(--t-hover) var(--e-hover);
-}
-
-.nav--scrolled {
-  border-bottom-color: var(--hairline);
-}
-
-.nav__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  min-height: var(--nav-height);
-}
-
-.nav__name {
+.eyebrow {
   font-family: var(--font-mono);
-  font-size: var(--size-caption);
-  color: var(--ink);
-  text-decoration: none;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
 }
 
-.nav__links ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.nav__links a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: var(--size-caption);
-  color: var(--ink);
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-  transition:
-    border-color var(--t-hover) var(--e-hover),
-    color var(--t-hover) var(--e-hover);
-}
-
-.nav__links a[aria-current="true"] {
-  border-bottom-color: var(--signal-deep);
-  color: var(--signal-deep);
-}
-
-@media (hover: hover) {
-  .nav__links a:hover {
-    border-bottom-color: var(--signal-deep);
-    color: var(--signal-deep);
-  }
-}
-
-.nav__toggle {
-  display: none;
-  min-height: 44px;
-  padding: 0 12px;
-  background: transparent;
-  border: 1px solid var(--ink);
-  border-radius: var(--radius-control);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: var(--size-caption);
-  cursor: pointer;
-}
-
-@media (max-width: 767px) {
-  .has-js .nav__toggle {
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .has-js .nav__links {
-    display: none;
-    position: absolute;
-    inset: var(--nav-height) 0 auto 0;
-    background: var(--vellum);
-    border-bottom: 1px solid var(--hairline);
-    padding: 8px var(--gutter) 24px;
-  }
-
-  .has-js .nav__links--open {
-    display: block;
-  }
-
-  .has-js .nav__links ul {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  /* Without JavaScript the toggle can't open anything, so the links stay out as
-     a wrapped row under the name, and the taller bar scrolls away. */
-  body:not(.has-js) .nav {
-    position: static;
-  }
-
-  body:not(.has-js) .nav__inner {
-    flex-wrap: wrap;
-    gap: 0 24px;
-  }
-
-  body:not(.has-js) .nav__links ul {
-    gap: 0 20px;
-  }
-}
-
-/* ================================================================== hero */
-
-.hero {
-  border-top: none;
-}
-
-.hero__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 48px;
-  align-items: start;
-}
-
-@media (min-width: 1024px) {
-  .hero__grid {
-    grid-template-columns: 5fr 7fr;
-  }
-}
-
-.hero__names {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  margin-top: 12px;
-}
-
-.hero__name-alt {
-  font-size: clamp(28px, 4vw, 44px);
-  line-height: 1.2;
-  color: var(--graphite);
-}
-
-.hero__name-alt:lang(ar) {
-  font-family: var(--font-arabic);
-}
-
-.hero__name-alt:lang(he) {
-  font-family: var(--font-hebrew);
-}
-
-.hero__screen {
-  position: relative;
-}
-
-.hero__stack {
-  position: relative;
-}
-
-.hero__ascii {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Plex Mono's latin subset has no box-drawing glyphs, and mixing in a
-     fallback's wider ones breaks the columns and overflows a phone. A system
-     monospace face sets every glyph on one grid. */
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: clamp(9px, 1.5vw, 14px);
-  line-height: 1.45;
-  color: var(--signal);
-  background: var(--screen);
-  opacity: 1;
-  transition: opacity 500ms var(--e-ui);
-  pointer-events: none;
-  overflow: hidden;
-}
-
-/* The map is always painted underneath; the README layer sits opaque on top of
-   it and fades away, so nothing ever flashes in or out of position. */
-.hero__ascii[data-visible="false"] {
-  opacity: 0;
-}
-
-.hero__edge--draw {
-  animation: hero-draw 500ms var(--e-ui) forwards;
-}
-
-@keyframes hero-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.hero__nodes--settle {
-  animation: hero-settle 500ms var(--e-ui) forwards;
-  transform-origin: center;
-}
-
-@keyframes hero-settle {
-  from {
-    transform: scale(0.96);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* ============================================================== projects */
-
-/* One explicit minmax(0, 1fr) track: an auto track would grow to the screen's
-   widest row and push the whole page sideways on a phone. */
-.project {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 32px;
-  align-items: start;
-  padding-top: 40px;
-  border-top: 1px solid var(--hairline);
-}
-
-@media (min-width: 1024px) {
-  .project {
-    grid-template-columns: 5fr 7fr;
-    gap: 48px;
-  }
-
-  .project__screen {
-    position: sticky;
-    top: calc(var(--nav-height) + 32px);
-  }
-}
-
-.project__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  font-size: var(--size-caption);
-}
-
-/* ================================================================= about */
-
-.about__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 48px;
-}
-
-@media (min-width: 1024px) {
-  .about__grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.log {
-  margin: 0;
-  padding: 0 0 0 20px;
-  list-style: none;
-  border-left: 1px solid var(--hairline);
-}
-
-.log__entry {
-  position: relative;
-  padding-bottom: 32px;
-}
-
-.log__entry:last-child {
-  padding-bottom: 0;
-}
-
-.log__dot {
-  position: absolute;
-  left: -24px;
-  top: 8px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--signal-deep);
-}
-
-.log__period {
-  font-family: var(--font-mono);
-}
-
-/* ================================================================ skills */
-
-.skills {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 32px;
+.section-head__title {
+  margin-top: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 @media (min-width: 768px) {
-  .skills {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px 48px;
+  .section-head__title {
+    font-size: 3rem;
+    line-height: 1;
   }
 }
 
-.skills__list {
+.tag {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--secondary);
+  padding: 0.25rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1rem;
+  color: var(--secondary-foreground);
+}
+
+.tag-list {
   display: flex;
   flex-wrap: wrap;
+  gap: 0.5rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* The separator trails each item, like a comma, so a wrapped line starts flush
-   left instead of with a bar and an indent. */
-.skills__list li:not(:last-child)::after {
-  content: "";
-  display: inline-block;
-  width: 1px;
-  height: 14px;
-  margin: 0 10px;
-  background: var(--hairline);
-  vertical-align: -2px;
-}
-
-.skills__list li {
-  display: flex;
+/* Pill buttons and links. At least 44px tall on every screen. */
+.pill {
+  display: inline-flex;
   align-items: center;
-}
-
-.skills__item {
+  justify-content: center;
+  gap: 0.5rem;
   min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink);
+  padding: 0.75rem 1.5rem;
+  border: 1px solid transparent;
+  border-radius: 9999px;
   font-family: var(--font-sans);
-  font-size: var(--size-body);
-  text-align: left;
-  cursor: pointer;
-  transition: color var(--t-hover) var(--e-hover);
-}
-
-.skills__list[data-dimmed="true"] .skills__item {
-  color: var(--graphite);
-}
-
-.skills__item[data-active="true"] {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.skills__caption {
-  min-height: 1.5em;
-}
-
-/* =============================================================== contact */
-
-.contact__email {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: clamp(22px, 3.5vw, 36px);
-  color: var(--ink);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
   text-decoration: none;
-  border-bottom: 1px solid var(--hairline);
-  word-break: break-all;
+  cursor: pointer;
+  transition:
+    transform var(--t-ui) var(--e-hover),
+    opacity var(--t-hover) var(--e-hover),
+    border-color var(--t-hover) var(--e-hover),
+    background-color var(--t-hover) var(--e-hover);
 }
 
-.contact__email:hover {
-  color: var(--signal-deep);
-  border-bottom-color: var(--signal-deep);
+.pill--primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-elegant);
 }
 
-/* ============================================================ case study */
-
-.case__list {
-  margin: 0;
-  padding-left: 20px;
+.pill--outline {
+  border-color: var(--border);
+  background: var(--card);
+  color: var(--foreground);
 }
 
-.case__list li + li {
-  margin-top: 12px;
+.pill--solid {
+  background: var(--foreground);
+  color: var(--background);
 }
 
-.stack-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--size-caption);
-  text-align: left;
+@media (hover: hover) {
+  .pill--primary:hover {
+    color: var(--primary-foreground);
+    transform: translateY(-2px);
+  }
+  .pill--outline:hover {
+    color: var(--foreground);
+    border-color: color-mix(in oklab, var(--foreground) 30%, transparent);
+  }
+  .pill--solid:hover {
+    color: var(--background);
+    opacity: 0.9;
+  }
 }
 
-.stack-table th,
-.stack-table td {
-  padding: 10px 12px 10px 0;
-  border-bottom: 1px solid var(--hairline);
-  vertical-align: top;
-  font-weight: 400;
+/* Motion: the hero rises in on load; sections rise in as they scroll into
+   view. `data-reveal` is set by RevealObserver, so with JavaScript off every
+   section is visible from the start. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.stack-table thead th {
-  color: var(--graphite);
-  font-size: var(--size-identifier);
-  font-family: var(--font-mono);
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.stack-table tbody th {
-  width: 34%;
-  color: var(--graphite);
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
-/* ================================================================ footer */
-
-.footer {
-  padding-block: 40px;
-  border-top: 1px solid var(--hairline);
+.rise {
+  animation: rise 0.9s var(--e-rise) both;
 }
 
-/* R5.3 — the screen morphs between its section and its case-study page where
-   the browser supports view transitions, and crossfades everywhere else. */
-.project__screen,
-.case__screen {
-  view-transition-name: var(--screen-transition, none);
+.rise-late {
+  animation: rise 1.1s 0.15s var(--e-rise) both;
+}
+
+.float-a {
+  animation: floaty 6s ease-in-out infinite;
+}
+
+.float-b {
+  animation: floaty 7s 1s ease-in-out infinite;
+}
+
+/* The reveal moves with `translate`, not `transform`, so a revealed element's
+   own hover `transform` never fights it. Keep `transform` out of these rules:
+   the production CSS minifier folds `transform` and `translate` declared
+   together into a single `transform`, which the reduced-motion reset below
+   would then no longer undo. */
+.reveal {
+  transition:
+    opacity 0.8s ease,
+    translate 0.8s var(--e-rise);
+}
+
+[data-reveal] .reveal:not(.is-in) {
+  opacity: 0;
+  translate: 0 24px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation-duration: 150ms;
+  .rise,
+  .rise-late,
+  .float-a,
+  .float-b {
+    animation: none;
+  }
+  [data-reveal] .reveal:not(.is-in) {
+    opacity: 1;
+    translate: none;
   }
 }

@@ -1,23 +1,46 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { visibleSlugs, visibleTitles } from "./content";
+import { visibleTitles } from "./content";
 import { hydrated } from "./hydrated";
+
+/** Scrolls to the bottom a viewport at a time, so every scroll reveal gets its turn. */
+async function scrollToBottom(page: Page) {
+  await page.evaluate(async () => {
+    const step = Math.max(200, Math.floor(window.innerHeight * 0.8));
+    for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
+      window.scrollTo(0, y);
+      await new Promise((resolve) => setTimeout(resolve, 60));
+    }
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  });
+}
 
 test.describe("home page", () => {
   test("shows who this is above the fold", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1, name: "Faisal Nasir" })).toBeVisible();
-    await expect(
-      page.getByText("CS student at Ben-Gurion University of the Negev (expected graduation 2028)"),
-    ).toBeVisible();
-    await expect(page.getByRole("link", { name: "See the projects" })).toBeVisible();
+    // R1.1 — name, role line and the primary action sit in the first viewport.
+    const name = page.getByRole("heading", { level: 1, name: "Faisal Nasir" });
+    await expect(name).toBeVisible();
+    await expect(name).toBeInViewport();
+    const role = page.getByText(
+      "CS student at Ben-Gurion University of the Negev (expected graduation 2028)",
+    );
+    await expect(role).toBeVisible();
+    await expect(role).toBeInViewport();
+    const cta = page.getByRole("link", { name: "See the projects" });
+    await expect(cta).toBeVisible();
+    await expect(cta).toBeInViewport();
   });
 
   test("hero text is real, selectable DOM text", async ({ page }) => {
     await page.goto("/");
-    const text = await page.locator("h1").innerText();
+    const h1 = page.locator("h1");
+    // One word per line, and a decorative full stop after the last one.
+    const text = (await h1.innerText()).replace(/\s+/g, " ").trim().replace(/\.$/, "");
     expect(text).toBe("Faisal Nasir");
-    await expect(page.locator("h1 canvas, h1 img")).toHaveCount(0);
+    // The full stop is hidden from assistive technology.
+    await expect(h1).toHaveAccessibleName("Faisal Nasir");
+    await expect(page.locator("h1 canvas, h1 img, h1 svg")).toHaveCount(0);
   });
 
   test("never renders a placeholder token", async ({ page }) => {
@@ -41,30 +64,10 @@ test.describe("home page", () => {
     await expect(page.locator(":focus")).toHaveText("Skip to projects");
   });
 
-  test("the hero sequence resolves within 1.6 s and does not replay", async ({ page }) => {
-    const start = Date.now();
-    await page.goto("/");
-    // R2.1 — the README state is shown, then it resolves into the vector map.
-    await expect(page.locator(".hero__ascii")).toBeVisible({ timeout: 900 });
-    // Polled every 50ms: expect's own backoff (0, 100, 350, 850, 1850ms) has no
-    // check between 850ms and the 1.6s deadline.
-    await expect
-      .poll(() => page.locator(".hero__ascii").count(), { timeout: 1600, intervals: [50] })
-      .toBe(0);
-    expect(Date.now() - start).toBeLessThan(2600);
-
-    // R2.2 — a reload inside the same session goes straight to the running state.
-    await page.reload();
-    await expect(page.locator(".hero__map")).toBeVisible();
-    await expect(page.locator(".hero__ascii")).toHaveCount(0);
-  });
-
-  test("a hero node moves focus to that project's heading", async ({ page }) => {
+  test("the home page runs no diagrams; they live on the case studies", async ({ page }) => {
     await page.goto("/");
     await hydrated(page);
-    const slug = visibleSlugs[0];
-    await page.getByRole("button", { name: `Go to ${slug}` }).click();
-    await expect(page.locator(`#project-${slug}`)).toBeFocused();
+    await expect(page.locator("figure.screen")).toHaveCount(0);
   });
 
   test("the nav underlines the section in view", async ({ page }) => {
@@ -75,7 +78,8 @@ test.describe("home page", () => {
 
   test("lists the projects on the site in the content file's order", async ({ page }) => {
     await page.goto("/");
-    const titles = await page.locator(".project h3").allInnerTexts();
+    // The featured card first, then the grid, in page order.
+    const titles = await page.locator(".projects .project__title").allInnerTexts();
     expect(titles).toEqual(visibleTitles);
   });
 
@@ -94,6 +98,55 @@ test.describe("home page", () => {
     await hydrated(page);
     await page.getByRole("button", { name: "Copy email" }).click();
     await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      "nasirfaisal83@gmail.com",
+    );
     await expect(page.getByRole("button", { name: "Copy email" })).toBeVisible({ timeout: 4000 });
+  });
+
+  for (const width of [390, 1440]) {
+    test(`no horizontal overflow at ${width}px once scrolled to the bottom`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await hydrated(page);
+      await scrollToBottom(page);
+      // Let the last reveals finish moving.
+      await page.waitForTimeout(1000);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(1);
+      await expect(page.locator(".footer")).toBeInViewport();
+    });
+  }
+});
+
+test.describe("reduced motion", () => {
+  // `test.use({ reducedMotion })` doesn't reach matchMedia in this setup; emulateMedia does.
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+  });
+
+  test("every scroll-reveal section is fully shown without scrolling", async ({ page }) => {
+    await page.goto("/");
+    await hydrated(page);
+    // RevealObserver is on, so the hidden start state would apply if motion allowed it.
+    await expect(page.locator("html")).toHaveAttribute("data-reveal", "on");
+    const reveals = page.locator(".reveal");
+    expect(await reveals.count()).toBeGreaterThan(0);
+    const states = await reveals.evaluateAll((elements) =>
+      elements.map((el) => {
+        const style = getComputedStyle(el);
+        return {
+          name: `${el.tagName.toLowerCase()}.${[...el.classList].join(".")}`,
+          opacity: style.opacity,
+          moved:
+            style.transform !== "none" || (style.translate !== "none" && style.translate !== ""),
+        };
+      }),
+    );
+    for (const state of states) {
+      expect(state, state.name).toMatchObject({ opacity: "1", moved: false });
+    }
   });
 });

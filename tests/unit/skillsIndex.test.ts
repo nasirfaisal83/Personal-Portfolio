@@ -39,13 +39,9 @@ describe("projectsForSkill", () => {
 });
 
 describe("captionForSkill", () => {
-  it("labels coursework and language groups instead of matching projects", () => {
-    const coursework = skills.find((g) => g.group === "Systems programming (coursework)");
+  it("labels the language group instead of matching projects", () => {
     const languages = skills.find((g) => g.group === "Human languages");
-    expect(coursework && captionForSkill(coursework, "ELF format")).toEqual({
-      kind: "label",
-      text: "Coursework",
-    });
+    expect(languages).toBeDefined();
     expect(languages && captionForSkill(languages, "Arabic")).toEqual({
       kind: "label",
       text: "Language",
@@ -61,12 +57,22 @@ describe("captionForSkill", () => {
   });
 
   it("names nothing for a skill only a hidden project uses", () => {
-    const messaging = skills.find((g) => g.group === "Messaging & infra");
-    expect(messaging).toBeDefined();
-    if (!messaging) return;
+    const backend = skills.find((g) => g.items.includes("Apache Kafka"));
+    expect(backend).toBeDefined();
+    if (!backend) return;
     const shown = projects.filter((p) => p.slug !== "order-saga");
-    const caption = captionForSkill(messaging, "Apache Kafka", shown);
+    const caption = captionForSkill(backend, "Apache Kafka", shown);
     expect(caption).toEqual({ kind: "none" });
     expect(captionText(caption)).toBe("");
+  });
+
+  it("gives no caption, not a fallback label, to a skill no project on the site uses", () => {
+    for (const group of skills.filter((g) => !g.label)) {
+      for (const item of group.items) {
+        const caption = captionForSkill(group, item);
+        if (projectsForSkill(item).length > 0) expect(caption.kind).toBe("projects");
+        else expect(caption).toEqual({ kind: "none" });
+      }
+    }
   });
 });

@@ -1,10 +1,23 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { onSite, visibleSlugs as SLUGS } from "./content";
 import { hydrated } from "./hydrated";
 
 /** The project a single-page test uses: its usual one if that is on the site. */
 const preferred = (slug: string) => (onSite(slug) ? slug : SLUGS[0]);
+
+/** Each element's opacity as painted: its own times every ancestor's. */
+function paintedOpacity(elements: Locator) {
+  return elements.evaluateAll((list) =>
+    list.map((el) => {
+      let opacity = 1;
+      for (let node: Element | null = el; node; node = node.parentElement) {
+        opacity *= Number(getComputedStyle(node).opacity);
+      }
+      return { text: el.textContent?.trim().slice(0, 40), opacity };
+    }),
+  );
+}
 
 test.describe("case-study routes", () => {
   for (const slug of SLUGS) {
@@ -14,17 +27,19 @@ test.describe("case-study routes", () => {
       await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Design decisions" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Stack" })).toBeVisible();
-      // R2.2 — the hero sequence belongs to the home route only.
-      await expect(page.locator(".hero__ascii")).toHaveCount(0);
+      // The project's diagram runs here, and only here.
+      await expect(page.locator("figure.screen")).toHaveCount(1);
     });
   }
 
   test("back and forward navigation works", async ({ page }) => {
-    // The first "Read the case study" link belongs to the first project on the page.
     const first = new RegExp(`/projects/${SLUGS[0]}/?$`);
     await page.goto("/");
-    await page.locator(`#project-${SLUGS[0]}`).scrollIntoViewIfNeeded();
-    await page.getByRole("link", { name: "Read the case study" }).first().click();
+    await hydrated(page);
+    // The featured card says "Read the case study", a grid card "Case study".
+    const card = page.locator(".project", { has: page.locator(`#project-${SLUGS[0]}`) });
+    await card.scrollIntoViewIfNeeded();
+    await card.getByRole("link", { name: /case study/i }).click();
     await expect(page).toHaveURL(first);
     await page.goBack();
     await expect(page).toHaveURL(/\/$/);
@@ -68,28 +83,46 @@ test.describe("responsive", () => {
     });
   }
 
-  test("interactive targets are at least 44px tall", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 900 });
-    await page.goto("/");
-    await hydrated(page);
-    const boxes = await page
-      .locator(".btn, .screen-btn, .nav__toggle, .hero__map [role='button']")
-      .all();
-    for (const box of boxes) {
-      const size = await box.boundingBox();
-      if (size) expect(size.height).toBeGreaterThanOrEqual(43);
-    }
-  });
+  // Pills (hero, nav, contact, its copy and icon buttons), the nav toggle, the
+  // project cards' links and the screen buttons of a case study.
+  const TARGETS = ".pill, .nav__toggle, .project__cta a, .project__footer a, .screen-btn";
+  for (const path of ["/", `/projects/${preferred("order-saga")}/`]) {
+    test(`interactive targets on ${path} are at least 44px tall at 390px`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 900 });
+      await page.goto(path);
+      await hydrated(page);
+      const boxes = await page.locator(TARGETS).evaluateAll((elements) =>
+        elements
+          .filter((el) => el.getClientRects().length > 0)
+          .map((el) => {
+            const box = el.getBoundingClientRect();
+            return {
+              name: el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 30),
+              height: box.height,
+              // An icon-only control must be a square target, not a sliver.
+              width: el.textContent?.trim() ? 44 : box.width,
+            };
+          }),
+      );
+      expect(boxes.length).toBeGreaterThan(0);
+      for (const box of boxes) {
+        expect(box.height, `${box.name} height`).toBeGreaterThanOrEqual(43);
+        expect(box.width, `${box.name} width`).toBeGreaterThanOrEqual(43);
+      }
+    });
+  }
 
   test("screen buttons wrap onto rows instead of scrolling at 390px", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
-    await hydrated(page);
-    const hidden = await page
-      .locator(".screen__controls")
-      .evaluateAll((rows) => rows.map((row) => row.scrollWidth - row.clientWidth));
-    expect(hidden).toHaveLength(SLUGS.length);
-    for (const extra of hidden) expect(extra).toBeLessThanOrEqual(1);
+    for (const slug of SLUGS) {
+      await page.goto(`/projects/${slug}/`);
+      await hydrated(page);
+      const hidden = await page
+        .locator(".screen__controls")
+        .evaluateAll((rows) => rows.map((row) => row.scrollWidth - row.clientWidth));
+      expect(hidden, slug).toHaveLength(1);
+      for (const extra of hidden) expect(extra, slug).toBeLessThanOrEqual(1);
+    }
   });
 
   test("a case study doesn't shift as it hydrates at 390px", async ({ page }) => {
@@ -150,11 +183,9 @@ test.describe("responsive", () => {
       }) => {
         await page.emulateMedia({ reducedMotion: "reduce" });
         await page.setViewportSize({ width, height: 900 });
-        await page.goto("/");
+        await page.goto(`/projects/${ending.slug}/`);
         await hydrated(page);
-        const figure = page
-          .locator(".project", { has: page.locator(`#project-${ending.slug}`) })
-          .locator("figure");
+        const figure = page.locator("figure.screen");
         await figure.scrollIntoViewIfNeeded();
         await figure.getByRole("button", { name: ending.button, exact: true }).click();
         await expect(figure.locator("svg text").filter({ hasText: ending.text })).toBeVisible({
@@ -183,9 +214,24 @@ test.describe("responsive", () => {
 test.describe("without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
 
-  test("a phone gets the narrow diagrams and the section links", async ({ page }) => {
+  test("the home page shows every section and, on a phone, the section links", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
+    // The scroll reveal must not hide anything when it can never run.
+    const headings = page.locator("main h2");
+    expect(await headings.count()).toBeGreaterThanOrEqual(4);
+    for (const heading of await headings.all()) await expect(heading).toBeVisible();
+    for (const shown of await paintedOpacity(page.locator("main h2, main .reveal"))) {
+      expect(shown.opacity, shown.text).toBe(1);
+    }
+    await expect(
+      page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Skills" }),
+    ).toBeVisible();
+  });
+
+  test("a case study on a phone gets the narrow diagram", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/projects/${preferred("order-saga")}/`);
     const shown = await page
       .locator("svg.screen__stage")
       .evaluateAll((stages) =>
@@ -193,10 +239,8 @@ test.describe("without JavaScript", () => {
           .filter((stage) => getComputedStyle(stage).display !== "none")
           .map((stage) => Number(stage.getAttribute("viewBox")?.split(" ")[2])),
       );
-    // The hero map and every project's screen, each in its 360-wide layout.
-    expect(shown).toEqual(Array(SLUGS.length + 1).fill(360));
-    await expect(
-      page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Skills" }),
-    ).toBeVisible();
+    // Both layouts are in the markup; CSS shows the 360-wide one.
+    expect(shown).toEqual([360]);
+    await expect(page.locator("figure.screen .js-off-note")).toBeVisible();
   });
 });

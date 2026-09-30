@@ -30,8 +30,3 @@ export const about = {
   learning:
     "Self-directed: a structured AI engineering roadmap and off-campus bootcamps in microservices/DevOps, agentic AI, and Python/deep learning. Coursework includes the System Programming Laboratory (C, x86 NASM assembly, Unix processes and signals, ELF format) and Principles of Programming Languages (TypeScript functional programming, Ramda, monads, L3/Scheme).",
 } as const;
-
-export const community = {
-  role: "On-Campus Community Manager, Hasoub",
-  body: "Organizes talks, industry events, and a hackathon for the tech community in Israel.",
-} as const;

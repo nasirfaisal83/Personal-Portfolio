@@ -8,11 +8,29 @@ export const site = {
   roleLine: "CS student at Ben-Gurion University of the Negev (expected graduation 2028)",
   location: "Based in Israel",
   languages: "Arabic, Hebrew, English",
-  tagline: "TODO_TAGLINE",
+  tagline:
+    "Backend & AI engineer building production systems — from event-driven microservices to RAG and multi-agent pipelines.",
+  /** The part of the tagline set in the ink colour. */
+  taglineEmphasis: "production systems",
+  /** Hero badge, confirmed by the owner. */
+  badge: "Open to internships & junior roles",
+  /** The three chips floating around the hero photo. */
+  heroChips: ["Java · Spring Boot", "AI · RAG · Agents", "Kafka Microservices"],
   email: "nasirfaisal83@gmail.com",
   github: "https://github.com/nasirfaisal83",
   linkedin: "https://www.linkedin.com/in/faisal-nasir-381a33131",
   resumeUrl: "/resume.pdf",
+  /** Section eyebrows and titles. */
+  sections: {
+    projects: { eyebrow: "Selected work", title: "Systems I've built" },
+    about: { eyebrow: "About", title: "Engineer, teacher, community builder." },
+    skills: { eyebrow: "Toolkit", title: "What I work with" },
+  },
+  contact: {
+    eyebrow: "Let's talk",
+    headline: "Looking for an engineer who ships?",
+    headlineAccent: "Say hello.",
+  },
   /**
    * The site description, in two parts: `describeSite` in lib/metadata.ts
    * lists only the projects on the site, in this order. With all five visible

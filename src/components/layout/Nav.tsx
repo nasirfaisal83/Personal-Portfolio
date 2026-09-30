@@ -4,54 +4,79 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { site } from "@/content/site";
+import { ArrowUpRightIcon } from "@/components/ui/icons";
 
 const SECTIONS = [
   { id: "projects", label: "Projects" },
   { id: "about", label: "About" },
   { id: "skills", label: "Skills" },
-  { id: "community", label: "Community" },
   { id: "contact", label: "Contact" },
 ] as const;
 
+/** The wordmark, "first.last" in lower case, built from the name in site.ts. */
+const nameParts = site.name.trim().split(/\s+/);
+const wordmark = {
+  first: nameParts[0].toLowerCase(),
+  last: nameParts.length > 1 ? nameParts[nameParts.length - 1].toLowerCase() : "",
+};
+
 /**
- * R10.1, R10.2 — sticky bar, the section in view underlined, a hairline that
- * appears once the page has scrolled. Below 768px the links collapse behind a
- * "Menu" / "Close" button; no hamburger icon (design §3.3).
+ * The section a reader is in: the last one whose top has passed a line 40% of
+ * the way down the space under the bar, or the last section once the page is
+ * scrolled to the bottom. Ids sit on the section headings, so the measured box
+ * is the heading's enclosing <section>.
+ */
+function sectionInView(targets: { id: string; box: HTMLElement }[], barHeight: number) {
+  const root = document.documentElement;
+  if (window.innerHeight + window.scrollY >= root.scrollHeight - 2) {
+    return targets[targets.length - 1].id;
+  }
+  const line = barHeight + (window.innerHeight - barHeight) * 0.4;
+  let current: string | null = null;
+  for (const target of targets) {
+    if (target.box.getBoundingClientRect().top <= line) current = target.id;
+  }
+  return current;
+}
+
+/**
+ * R10.1, R10.2 — sticky, translucent bar with the section in view marked.
+ * From 768px the four section links sit between the wordmark and the "Email
+ * me" pill. Below that the links collapse behind a "Menu" / "Close" button
+ * next to the pill; no hamburger icon (design §3.3).
  */
 export function Nav() {
   const pathname = usePathname();
   const onHome = pathname === "/" || pathname === "";
   const [current, setCurrent] = useState<string | null>(null);
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const header = useRef<HTMLElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    if (!onHome) return;
+    const targets = SECTIONS.flatMap((section) => {
+      const el = document.getElementById(section.id);
+      return el ? [{ id: section.id, box: el.closest("section") ?? el }] : [];
+    });
+    if (targets.length === 0) return;
 
-  useEffect(() => {
-    if (!onHome || typeof IntersectionObserver !== "function") return;
-    const elements = SECTIONS.map((s) => document.getElementById(s.id)).filter(
-      (el): el is HTMLElement => el !== null,
-    );
-    if (elements.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) setCurrent(visible.target.id);
-      },
-      { rootMargin: "-64px 0px -60% 0px", threshold: 0 },
-    );
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setCurrent(sectionInView(targets, header.current?.offsetHeight ?? 0));
+    };
+    const schedule = () => {
+      if (frame === 0) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
   }, [onHome]);
 
   // The open menu closes on Escape (focus returns to the toggle) and on a tap
@@ -75,13 +100,31 @@ export function Nav() {
   }, [open]);
 
   const href = (id: string) => (onHome ? `#${id}` : `/#${id}`);
+  const close = () => setOpen(false);
 
   return (
-    <header ref={header} className={`nav${scrolled ? " nav--scrolled" : ""}`}>
+    <header ref={header} className="nav">
       <div className="shell nav__inner">
-        <Link href="/" className="nav__name">
-          {site.name}
+        <Link href="/" className="nav__wordmark" aria-label={site.name} onClick={close}>
+          {wordmark.first}
+          {wordmark.last ? (
+            <>
+              <span className="nav__dot">.</span>
+              {wordmark.last}
+            </>
+          ) : null}
         </Link>
+
+        <button
+          ref={toggle}
+          type="button"
+          className="pill pill--outline nav__toggle"
+          aria-expanded={open}
+          aria-controls="nav-links"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? "Close" : "Menu"}
+        </button>
 
         <nav
           id="nav-links"
@@ -94,30 +137,25 @@ export function Nav() {
                 <a
                   href={href(section.id)}
                   aria-current={onHome && current === section.id ? "true" : undefined}
-                  onClick={() => setOpen(false)}
+                  onClick={close}
                 >
                   {section.label}
                 </a>
               </li>
             ))}
-            <li>
-              <a href={site.github} target="_blank" rel="noopener noreferrer">
+            {/* Phone menu only: the wide bar shows the prototype's four links. */}
+            <li className="nav__extra">
+              <a href={site.github} target="_blank" rel="noopener noreferrer" onClick={close}>
                 GitHub
+                <ArrowUpRightIcon />
               </a>
             </li>
           </ul>
         </nav>
 
-        <button
-          ref={toggle}
-          type="button"
-          className="nav__toggle"
-          aria-expanded={open}
-          aria-controls="nav-links"
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? "Close" : "Menu"}
-        </button>
+        <a className="pill pill--solid nav__email" href={`mailto:${site.email}`}>
+          Email me
+        </a>
       </div>
     </header>
   );

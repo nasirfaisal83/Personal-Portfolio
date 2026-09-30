@@ -30,7 +30,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const project = getProject(slug);
   if (!project) notFound();
   return (
-    <div className="section">
+    <div className="case-page">
       <CaseStudy project={project} />
     </div>
   );

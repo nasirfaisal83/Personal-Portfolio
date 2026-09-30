@@ -1,50 +1,67 @@
-/* Design tokens — design §2. Everything visual on the page resolves to one of these. */
+/* Design tokens. Everything visual on the page resolves to one of these.
+   The palette, type and radii follow the Lovable prototype: a soft off-white
+   page, white cards, deep navy ink, and one teal-blue accent. */
 
 :root {
-  /* §2.1 Color */
-  --vellum: #eceff3;
-  --ink: #14202e;
-  --graphite: #5b6675;
-  --hairline: #d4dae2;
+  /* Colour */
+  --background: oklch(0.975 0.003 100);
+  --foreground: oklch(0.208 0.042 265.755);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.52 0.1 220);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-glow: oklch(0.8 0.12 200);
+  --secondary: oklch(0.955 0.006 250);
+  --secondary-foreground: oklch(0.35 0.03 260);
+  /* The prototype's 0.55 lightness measures 4.49:1 on the page background, a
+     hair under WCAG AA; 0.53 clears 4.5:1 on the page, card, secondary and
+     accent surfaces. */
+  --muted-foreground: oklch(0.53 0.03 257);
+  --accent: oklch(0.95 0.03 215);
+  --accent-foreground: oklch(0.42 0.09 220);
+  --border: oklch(0.915 0.008 255);
+  /* The dark featured and contact cards. */
+  --surface-ink: oklch(0.2 0.04 265);
+  --on-ink: oklch(0.97 0.005 250);
+  --shadow-elegant: 0 20px 50px -20px color-mix(in oklab, var(--primary) 35%, transparent);
+
+  /* Older names, kept so the case studies and screens follow the palette. */
+  --vellum: var(--background);
+  --ink: var(--foreground);
+  --signal-deep: var(--primary);
+
+  /* The dark instrument panel the project screens run in. */
   --screen: #0f1b2d;
   --screen-ink: #e6edf3;
   --screen-muted: #7a8ba0;
   --signal: #35d0c8;
-  --signal-deep: #0b6e68;
   --fault: #ff6b6b;
-
-  /* Derived, never used as text on vellum. */
+  /* Derived, never used as text on the page background. */
   --screen-ring: rgba(255, 255, 255, 0.04);
   --screen-grid: rgba(122, 139, 160, 0.06);
 
-  /* §2.2 Type */
-  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", "Menlo", monospace;
-  --font-sans:
-    var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-arabic: var(--font-plex-arabic), var(--font-sans);
-  --font-hebrew: var(--font-plex-hebrew), var(--font-sans);
+  /* Type */
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  --font-arabic: var(--font-sans);
+  --font-hebrew: var(--font-sans);
 
-  --size-name: clamp(56px, 9vw, 112px);
-  --size-h2: clamp(32px, 4vw, 44px);
-  --size-h3: 28px;
-  --size-body: 17px;
-  --size-caption: 15px;
-  --size-identifier: 13px;
-
-  /* §2.3 Space, radius, borders */
-  --unit: 8px;
-  --section-pad: clamp(64px, 10vh, 128px);
-  --content-max: 1120px;
-  --gutter: clamp(20px, 4vw, 48px);
+  /* Space, radius, borders */
+  --section-pad: 6rem;
+  --content-max: 72rem;
+  --gutter: 1.5rem;
+  --radius: 0.75rem;
+  --radius-card: 1.5rem;
+  --radius-card-lg: 2rem;
   --radius-control: 4px;
-  --radius-screen: 6px;
+  --radius-screen: 1rem;
   --nav-height: 64px;
 
-  /* §2.4 Motion */
-  --t-hover: 120ms;
+  /* Motion */
+  --t-hover: 150ms;
   --e-hover: ease-out;
   --t-ui: 240ms;
-  --e-ui: cubic-bezier(0.16, 1, 0.3, 1);
+  --e-rise: cubic-bezier(0.2, 0.7, 0.2, 1);
   --t-status: 300ms;
   --t-morph: 600ms;
 }

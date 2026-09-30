@@ -55,3 +55,33 @@ describe("content shape", () => {
     ]);
   });
 });
+
+describe("project cards", () => {
+  it("gives every project a category and at least one tag", () => {
+    for (const project of projects) {
+      expect(project.kind.trim().length).toBeGreaterThan(0);
+      expect(project.tags.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("takes every tag from that project's own stack", () => {
+    for (const project of projects) {
+      const stack = project.stack.map((entry) => entry.toLowerCase());
+      for (const tag of project.tags) {
+        expect(
+          stack.some((entry) => entry.includes(tag.toLowerCase())),
+          `${project.slug}: tag "${tag}" is not in its stack`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("numbers the featured card's steps with a title and a detail each", () => {
+    for (const project of projects) {
+      for (const step of project.steps ?? []) {
+        expect(step.title.trim().length).toBeGreaterThan(0);
+        expect(step.detail.trim().length).toBeGreaterThan(0);
+      }
+    }
+  });
+});

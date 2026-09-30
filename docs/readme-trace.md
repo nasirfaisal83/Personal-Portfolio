@@ -7,6 +7,15 @@ the UI as well as here.
 
 Reviewer sign-off: _pending_ — see task 5.2.
 
+**Where the screens run.** The home page now follows the prototype design: a
+photo hero, a featured card and a project grid. The animated project screens
+run on the case-study pages (`/projects/<slug>/`) only, and the hero map with
+its ASCII intro has been removed, so its section is gone from this file. The
+screen tables below still apply in full to the case-study pages. Text on the
+home page's project cards is quoted from `src/content/projects.ts`; the
+featured card's numbered steps are paraphrases rather than quotations, so they
+are traced line by line under Salon below.
+
 ---
 
 ## Salon Appointment System — `src/components/screens/salon/`
@@ -34,10 +43,24 @@ screen names the business.
 | `…/{token}/reschedule` (`POST /api/manage/{token}/reschedule`), `INSERT new row`, `original` / `replacement`, `new manage link` | §7.2 |
 | `conditional UPDATE`, `EXPIRED`, `deliberately silent` | §6 ("None — deliberately silent"), §9 (3) |
 | The seven states `REQUESTED CONFIRMED COMPLETED DECLINED EXPIRED CANCELLED NO_SHOW` | §6 |
-| `private client project` | §17: built solo for a real client, running in production |
+| `private client project` | §17: built for a real client, running in production |
 
 No throughput, booking volume or user figures appear, because the document
 states none (§17).
+
+### Featured card on the home page — `project.steps` in `src/content/projects.ts`
+
+Salon is the first visible project with `steps`, so it is the featured card.
+Each numbered step paraphrases the document section it cites.
+
+| Element | Text on the card | Source in PROJECT-OVERVIEW.md |
+|---|---|---|
+| Pick a slot | Availability computed live: hours − time off − busy appointments. | §7.1, §8: availability computed on demand; there is no slot table |
+| Verify phone | One-time SMS code sets a remembered-phone cookie. | §7.1, §8: `POST /booking/otp/request` and `/verify`, the remembered-phone cookie |
+| Request | Advisory lock + exclusion constraint prevent double booking. | §9: the advisory lock on salon and phone, and the exclusion constraint that settles a contested slot |
+| Approve | Stylist confirms from the dashboard; reminders are scheduled. | §6: REQUESTED → CONFIRMED by the stylist, with reminders scheduled on approval |
+| Self-manage | Signed link lets the customer cancel or reschedule. | §10: the cryptographically signed manage link |
+| Kind label | `Private client project · In production` | §17: built for a real client, running in production |
 
 ## Order-Saga — `src/components/screens/order-saga/`
 
@@ -109,10 +132,3 @@ the README states none.
 
 No confidence values appear anywhere on this screen (R4.27): the README
 documents none.
-
-## Hero map — `src/components/hero/heroMap.ts`
-
-The ambient packets carry one true fragment of each system: `order.created`
-(Order-Saga topics), `event: token` (rag-document-qa SSE), `ScoutAgent`
-(tech-news-agent agents), `MESSAGE` (Emergency-Alert-System frames) and
-`frame 0412` (con-Detection frame-by-frame processing).

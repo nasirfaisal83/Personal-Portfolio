@@ -1,0 +1,141 @@
+/* Skills tiles, after the Lovable prototype. Imported from globals.css. */
+
+/* ================================================================ skills */
+
+/* One card per group: a single column on a phone, two from 640px, three from
+   1024px. Tiles in a row stretch to the tallest one. */
+.skills {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+@media (min-width: 640px) {
+  .skills {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .skills {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.skills__tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+
+.skills__tile--ringed {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+/* The human languages: the solid accent tile, name on top, languages below. */
+.skills__tile--solid {
+  justify-content: space-between;
+  border: 0;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.skills__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+.skills__spoken {
+  margin: 1rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
+
+.skills__tile .skills__list {
+  --skills-row-gap: 0.5rem;
+  margin-top: 1rem;
+  row-gap: var(--skills-row-gap);
+}
+
+/* A finger needs 44px: on a touch screen the rows open up just enough for each
+   26px tag to own 44px of target. A mouse keeps the prototype's 8px rows. */
+@media (pointer: coarse) {
+  .skills__tile .skills__list {
+    --skills-row-gap: 1.125rem;
+  }
+}
+
+/* Items are drawn as the prototype's tags (.tag): buttons when they have a
+   caption to show, plain tags when they don't. */
+.skills__item {
+  position: relative;
+  text-align: start;
+  overflow-wrap: anywhere;
+  transition:
+    color var(--t-hover) var(--e-hover),
+    background-color var(--t-hover) var(--e-hover),
+    border-color var(--t-hover) var(--e-hover);
+}
+
+button.skills__item {
+  cursor: pointer;
+}
+
+/* The target reaches halfway across the gaps around the tag, so neighbouring
+   targets meet but never overlap: the tag you see is the tag you hit. The inset
+   counts from inside the tag's 1px border, hence the extra pixel. */
+.skills__item::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--skills-row-gap) / -2 - 1px) calc(-0.25rem - 1px);
+}
+
+.skills__list[data-dimmed="true"] .skills__item {
+  background: var(--card);
+  color: var(--muted-foreground);
+}
+
+.skills__list .skills__item[data-active="true"] {
+  border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* The caption sits at the foot of the tile. Every caption the group can show is
+   stacked, hidden, in the same cell, so the line is already as tall as the
+   longest one and showing a caption never shifts the page. */
+.skills__caption {
+  display: grid;
+  min-height: 1rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--muted-foreground);
+}
+
+.skills__caption > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.skills__sizer {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skills__item {
+    transition: none;
+  }
+}

@@ -1,9 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CheckIcon, CopyIcon } from "./icons";
 
-/** R9.1 — "Copy email" confirms with "Copied" for two seconds. */
-export function CopyButton({ value, label }: { value: string; label: string }) {
+/**
+ * R9.1 — "Copy email" confirms with "Copied" for two seconds.
+ *
+ * The button reads "Copy", then "Copied". Its accessible name is `label` until
+ * the copy succeeds and "Copied" for those two seconds; the live region beside
+ * it announces the change.
+ */
+export function CopyButton({
+  value,
+  label,
+  className = "pill pill--outline",
+}: {
+  value: string;
+  label: string;
+  className?: string;
+}) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -28,8 +43,14 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
 
   return (
     <>
-      <button type="button" className="btn" onClick={copy}>
-        {copied ? "Copied" : label}
+      <button
+        type="button"
+        className={className}
+        onClick={copy}
+        aria-label={copied ? "Copied" : label}
+      >
+        {copied ? <CheckIcon /> : <CopyIcon />}
+        {copied ? "Copied" : "Copy"}
       </button>
       <span aria-live="polite" className="visually-hidden">
         {copied ? "Copied" : ""}

@@ -8,15 +8,19 @@
 // that the client stay unnamed and that no figure be invented.
 //
 // Hiding, showing and editing a project — change this file, then rebuild:
-// - `visible: false` takes the project off the site: its section, its
-//   /projects/<slug>/ page, its hero-map node, the sitemap, the Skills captions
-//   and the counts in the site copy. `visible: true` brings all of it back.
+// - `visible: false` takes the project off the site: its card, its
+//   /projects/<slug>/ page, the sitemap, the Skills captions and the counts in
+//   the site copy. `visible: true` brings all of it back.
 // - Never delete an entry to hide it; the build checks that all six exist.
-// - The order of this list is the order of the sections on the page.
-// - Safe to edit: title, github, systemSummary, summary, stack, stackTable,
-//   howItWorks, highlights. Leave `slug` and `screen` alone: the page URLs, the
-//   hero map and each animated diagram are keyed to them.
+// - The order of this list is the order of the cards on the page.
+// - Safe to edit: title, github, kind, tags, steps, systemSummary, summary,
+//   stack, stackTable, howItWorks, highlights. Leave `slug` and `screen` alone:
+//   the page URLs and each animated diagram are keyed to them.
 // - A project with no `github` is shown as a private client project.
+// - `kind` is the card's category label; `tags` are the card's short stack
+//   tags, each one taken from that project's `stack`.
+// - The first visible project with `steps` is the featured card at the top of
+//   the Projects section; the others are the numbered grid.
 
 export type ScreenId = "salon" | "order-saga" | "rag" | "agents" | "stomp" | "detection";
 
@@ -33,6 +37,12 @@ export interface Project {
   /** The public repository. Leave it out for a private client project. */
   github?: string;
   screen: ScreenId;
+  /** Category label on the project card, e.g. "Distributed systems". */
+  kind: string;
+  /** Short stack tags on the card; each one appears in `stack`. */
+  tags: string[];
+  /** The numbered steps of the featured card, in order. */
+  steps?: { title: string; detail: string }[];
   /** One sentence used as the screen's accessible name (design §6.5). */
   systemSummary: string;
   summary: string;
@@ -48,6 +58,31 @@ export const projects: Project[] = [
     visible: true,
     title: "Salon Appointment System",
     screen: "salon",
+    kind: "Private client project · In production",
+    tags: [
+      "Spring Boot",
+      "Java",
+      "PostgreSQL",
+      "Flyway",
+      "Next.js",
+      "React 19",
+      "TypeScript",
+      "Cloudflare R2",
+      "JUnit 5",
+      "Docker",
+    ],
+    // PROJECT-OVERVIEW.md §7.1 and §8 (availability, OTP), §9 (lock and
+    // constraint), §6 (approval and reminders), §10 (the signed manage link).
+    steps: [
+      {
+        title: "Pick a slot",
+        detail: "Availability computed live: hours − time off − busy appointments.",
+      },
+      { title: "Verify phone", detail: "One-time SMS code sets a remembered-phone cookie." },
+      { title: "Request", detail: "Advisory lock + exclusion constraint prevent double booking." },
+      { title: "Approve", detail: "Stylist confirms from the dashboard; reminders are scheduled." },
+      { title: "Self-manage", detail: "Signed link lets the customer cancel or reschedule." },
+    ],
     // No `github`: the repository is private, and the client is not named (§17).
     systemSummary:
       "a request-based salon booking system where a database exclusion constraint, not the application, decides who gets a contested slot",
@@ -113,6 +148,8 @@ export const projects: Project[] = [
     visible: true,
     title: "Order-Saga",
     screen: "order-saga",
+    kind: "Distributed systems",
+    tags: ["Spring Boot 3.4", "Kafka", "PostgreSQL", "Spring Cloud", "Docker"],
     github: "https://github.com/nasirfaisal83/Order-Saga",
     systemSummary:
       "five Spring Boot services coordinating an order through Kafka events, with compensation when a step fails",
@@ -164,6 +201,8 @@ export const projects: Project[] = [
     visible: true,
     title: "rag-document-qa",
     screen: "rag",
+    kind: "AI · Retrieval",
+    tags: ["Spring AI", "GPT-4o", "pgvector", "WebFlux", "Java 21"],
     github: "https://github.com/nasirfaisal83/rag-document-qa",
     systemSummary:
       "a document ingestion pipeline and a question-answering flow grounded in retrieved chunks",
@@ -229,6 +268,8 @@ export const projects: Project[] = [
     visible: true,
     title: "tech-news-agent",
     screen: "agents",
+    kind: "AI · Multi-agent",
+    tags: ["Spring AI", "gpt-4o-mini", "Tavily", "GitHub MCP", "Java 21"],
     github: "https://github.com/nasirfaisal83/tech-news-agent",
     systemSummary:
       "an orchestrator running a ReAct loop over five specialist agents and two tools, with a fact-check retry",
@@ -271,6 +312,8 @@ export const projects: Project[] = [
     visible: true,
     title: "Emergency-Alert-System",
     screen: "stomp",
+    kind: "Networking · Concurrency",
+    tags: ["Java", "STOMP", "Java NIO", "C++11", "Boost ASIO"],
     github: "https://github.com/nasirfaisal83/Emergency-Alert-System",
     systemSummary:
       "a STOMP server in two threading models broadcasting channel events to subscribed clients",
@@ -312,6 +355,8 @@ export const projects: Project[] = [
     visible: false,
     title: "con-Detection",
     screen: "detection",
+    kind: "Computer vision",
+    tags: ["Python", "YOLOv5", "PyTorch", "OpenCV", "Google Colab"],
     github: "https://github.com/nasirfaisal83/con-Detection",
     systemSummary: "a YOLOv5 detection loop drawing bounding boxes on traffic cones frame by frame",
     summary:
@@ -350,6 +395,27 @@ export const projectSlugs = projects.map((p) => p.slug);
 
 /** The projects on the site. Anything a visitor sees reads this list, never `projects`. */
 export const visibleProjects = projects.filter((p) => p.visible);
+
+/**
+ * Splits a list into the featured card (the first project with numbered steps)
+ * and the numbered grid (every other project, in list order). Without such a
+ * project there is no featured card and the grid holds the whole list.
+ */
+export function splitFeatured(list: readonly Project[]): {
+  featured: Project | undefined;
+  grid: Project[];
+} {
+  const featured = list.find((p) => (p.steps?.length ?? 0) > 0);
+  return { featured, grid: list.filter((p) => p !== featured) };
+}
+
+const split = splitFeatured(visibleProjects);
+
+/** The featured card: the first project on the site that has numbered steps. */
+export const featuredProject: Project | undefined = split.featured;
+
+/** The numbered grid: every other project on the site, in list order. */
+export const gridProjects: Project[] = split.grid;
 
 /** A project on the site; a hidden one is treated as not existing. */
 export function getProject(slug: string): Project | undefined {

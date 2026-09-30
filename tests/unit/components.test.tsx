@@ -3,17 +3,24 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Name } from "@/components/hero/Name";
 import { About } from "@/components/sections/About";
-import { Community } from "@/components/sections/Community";
+import { Projects } from "@/components/sections/Projects";
+import { SkillGroups } from "@/components/sections/SkillGroups";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Screen } from "@/components/screens/engine/Screen";
 import { StaticScreen } from "@/components/screens/engine/ScenarioScreen";
 import { scene } from "@/components/screens/order-saga/scene";
 import { scenarios } from "@/components/screens/order-saga/scenarios";
+import { about } from "@/content/experience";
+import { featuredProject, gridProjects } from "@/content/projects";
+
+// TransitionLink reads the App Router, which is not mounted under jsdom.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 describe("Name", () => {
   it("hides the Arabic and Hebrew spans while they are placeholders", () => {
     render(<Name />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Faisal Nasir");
+    // The teal full stop after the name is decoration, left out of its name.
+    expect(screen.getByRole("heading", { level: 1 })).toHaveAccessibleName("Faisal Nasir");
     expect(document.querySelector('[lang="ar"]')).toBeNull();
     expect(document.querySelector('[lang="he"]')).toBeNull();
   });
@@ -24,20 +31,73 @@ describe("About", () => {
     render(<About />);
     expect(screen.getByText("Teaching Assistant")).toBeInTheDocument();
     expect(screen.queryByText(/TODO_/)).toBeNull();
-    expect(document.querySelector(".log__period")).toBeNull();
+    expect(document.querySelector(".about__exp-period")).toBeNull();
+  });
+
+  it("carries the Hasoub community role that used to have its own section", () => {
+    render(<About />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveAttribute("id", "about");
+    expect(screen.getByText(about.community)).toBeInTheDocument();
+    const roles = screen.getByRole("list", { name: "Experience" });
+    expect(roles).toHaveTextContent("On-Campus Community Manager");
+    expect(roles).toHaveTextContent("Hasoub");
+    expect(roles).toHaveTextContent("Organizes talks, industry events, and a hackathon");
   });
 });
 
-describe("Community", () => {
-  it("renders the role and the three activities and nothing more", () => {
-    const { container } = render(<Community />);
-    expect(screen.getByText("On-Campus Community Manager, Hasoub")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Organizes talks, industry events, and a hackathon for the tech community in Israel.",
-      ),
-    ).toBeInTheDocument();
-    expect(container.querySelectorAll("p")).toHaveLength(2);
+describe("Projects", () => {
+  it("shows the featured card first, then the grid in list order", () => {
+    render(<Projects />);
+    const shown = [...(featuredProject ? [featuredProject] : []), ...gridProjects];
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(
+      shown.map((p) => p.title),
+    );
+    for (const project of shown) {
+      expect(screen.getByRole("heading", { level: 3, name: project.title })).toHaveAttribute(
+        "id",
+        `project-${project.slug}`,
+      );
+    }
+  });
+
+  it("links each grid card to its code, or says it is a private client project", () => {
+    render(<Projects />);
+    // jsdom has no layout, so the name may carry a space before the hidden colon.
+    const named = (label: string, title: string) =>
+      new RegExp(`^${label}\\s?: ${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
+    for (const project of gridProjects) {
+      if (project.github) {
+        expect(screen.getByRole("link", { name: named("Code", project.title) })).toHaveAttribute(
+          "href",
+          project.github,
+        );
+      }
+      expect(
+        screen.getByRole("link", { name: named("Case study", project.title) }).getAttribute("href"),
+      ).toMatch(new RegExp(`^/projects/${project.slug}/?$`));
+    }
+    const privateCards = gridProjects.filter((p) => !p.github).length;
+    expect(screen.queryAllByText("Private client project")).toHaveLength(privateCards);
+  });
+});
+
+describe("SkillGroups", () => {
+  it("makes buttons only of skills with a caption, and a plain tag clears it", async () => {
+    const user = userEvent.setup();
+    render(
+      <SkillGroups
+        groups={[{ group: "Tools", items: ["Docker", "Kubernetes"] }]}
+        captions={{ Tools: { Docker: "Used in Order-Saga", Kubernetes: "" } }}
+      />,
+    );
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Docker"]);
+    expect(screen.getByText("Kubernetes").tagName).toBe("SPAN");
+
+    const live = document.querySelector(".skills__live");
+    await user.hover(screen.getByRole("button", { name: "Docker" }));
+    expect(live?.textContent).toBe("Used in Order-Saga");
+    await user.hover(screen.getByText("Kubernetes"));
+    expect(live?.textContent).toBe("");
   });
 });
 

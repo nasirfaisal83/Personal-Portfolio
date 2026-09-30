@@ -65,13 +65,16 @@ Everything is in `src/content/projects.ts`. After a change, run `npm run build`
 and deploy `out/`.
 
 - **Hide:** set `visible: false` on the project. It leaves the whole site: its
-  section, its `/projects/<slug>/` page, its hero-map node, the sitemap, the
-  Skills captions and the project counts in the copy.
+  card on the home page, its `/projects/<slug>/` page, the sitemap, the Skills
+  captions and the project counts in the copy.
 - **Show again:** set it back to `visible: true`. Nothing is lost while it is
   hidden.
-- **Edit:** change `title`, `github`, `systemSummary`, `summary`, `stack`,
-  `stackTable`, `howItWorks` or `highlights`.
-- **Reorder:** move the entry. The list order is the order on the page.
+- **Edit:** change `title`, `github`, `kind`, `tags`, `steps`, `systemSummary`,
+  `summary`, `stack`, `stackTable`, `howItWorks` or `highlights`. Every tag must
+  appear in that project's `stack`.
+- **Reorder:** move the entry. The list order is the order on the page, except
+  that the first visible project with `steps` is lifted into the featured card
+  at the top of the Projects section.
 - **Private project:** leave out `github`. The project shows "Private client
   project" instead of a GitHub link. The Salon Appointment System is one: its
   facts come from its private repository's `PROJECT-OVERVIEW.md`, and the

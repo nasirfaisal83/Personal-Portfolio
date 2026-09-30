@@ -1,32 +1,29 @@
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
-import { site, isPlaceholder } from "@/content/site";
+import { DM_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
 /**
- * R13.3 — four subsetted files on first load: Plex Mono Regular + Italic,
- * Plex Sans Regular + Medium. `adjustFontFallback` (on by default) supplies the
- * size-adjusted fallback that keeps font swap from shifting layout (R13.4).
+ * The prototype's three faces: Space Grotesk for headings, DM Sans for text,
+ * JetBrains Mono for labels and tags. Each is a variable font, so every weight
+ * comes from one subsetted file, and `adjustFontFallback` (on by default)
+ * keeps the swap from shifting layout (R13.4).
  */
-export const plexMono = IBM_Plex_Mono({
+export const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
   display: "swap",
-  variable: "--font-plex-mono",
+  variable: "--font-space-grotesk",
 });
 
-export const plexSans = IBM_Plex_Sans({
+export const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "500"],
   display: "swap",
-  variable: "--font-plex-sans",
+  variable: "--font-dm-sans",
 });
 
-/**
- * Plex Sans Arabic and Hebrew are only worth loading once the name has real
- * glyphs to set (task 0.4). While the spellings are placeholders the spans are
- * not rendered at all, so the faces stay unrequested.
- */
-export const trilingualNameEnabled =
-  !isPlaceholder(site.nameArabic) || !isPlaceholder(site.nameHebrew);
+export const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jetbrains-mono",
+});
 
-export const fontVariables = [plexMono.variable, plexSans.variable].join(" ");
+export const fontVariables = [spaceGrotesk.variable, dmSans.variable, jetbrainsMono.variable].join(
+  " ",
+);
