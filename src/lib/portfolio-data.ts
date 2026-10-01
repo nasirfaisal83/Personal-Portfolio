@@ -32,7 +32,7 @@ export const featured = {
 
 export const projects = [
   {
-    visible: false,
+    visible: true,
     name: "Order-Saga",
     kind: "Distributed systems",
     summary:
