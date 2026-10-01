@@ -5,7 +5,16 @@ export const links = {
   site: "https://www.faisalnasir.dev",
 };
 
+// Projects: `featured` is the large card at the top of the Projects section,
+// `projects` is the grid below it, shown in list order. Each one's case-study
+// page text lives in case-studies.ts under the same `slug`; don't change a slug.
+//
+// To hide a project, set `visible: false` — its card disappears and its
+// /projects/<slug> page becomes a 404. Set it back to `true` to restore both.
+// Don't delete entries to hide them.
+
 export const featured = {
+  visible: true,
   name: "Salon Appointment System",
   tag: "Private client project · In production",
   summary:
@@ -23,6 +32,7 @@ export const featured = {
 
 export const projects = [
   {
+    visible: false,
     name: "Order-Saga",
     kind: "Distributed systems",
     summary:
@@ -32,6 +42,7 @@ export const projects = [
     slug: "order-saga",
   },
   {
+    visible: true,
     name: "rag-document-qa",
     kind: "AI · Retrieval",
     summary:
@@ -41,6 +52,7 @@ export const projects = [
     slug: "rag-document-qa",
   },
   {
+    visible: true,
     name: "tech-news-agent",
     kind: "AI · Multi-agent",
     summary:
@@ -50,6 +62,7 @@ export const projects = [
     slug: "tech-news-agent",
   },
   {
+    visible: true,
     name: "Emergency-Alert-System",
     kind: "Networking · Concurrency",
     summary:
@@ -59,6 +72,14 @@ export const projects = [
     slug: "emergency-alert-system",
   },
 ];
+
+/** The grid projects that are on the site. */
+export const visibleProjects = projects.filter((p) => p.visible);
+
+/** Whether a project's card and case-study page are on the site. */
+export function isProjectVisible(slug: string): boolean {
+  return [featured, ...projects].some((p) => p.slug === slug && p.visible);
+}
 
 export const experience = [
   { role: "Teaching Assistant", org: "Ben-Gurion University of the Negev", detail: "Data Structures · Introduction to CS (Java & OOP)" },

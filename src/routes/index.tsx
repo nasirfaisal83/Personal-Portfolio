@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ArrowUpRight, Github, Linkedin, Mail, Copy, Check, MapPin, GraduationCap } from "lucide-react";
 import front from "@/assets/faisal-front.png";
 import side from "@/assets/faisal-side.png";
-import { links, featured, projects, experience, skills } from "@/lib/portfolio-data";
+import { links, featured, visibleProjects, experience, skills } from "@/lib/portfolio-data";
 import { useReveal } from "@/hooks/use-reveal";
 
 export const Route = createFileRoute("/")({
@@ -96,39 +96,41 @@ function Index() {
       {/* Featured */}
       <section id="projects" className="mx-auto max-w-6xl px-6 py-24">
         <SectionHead eyebrow="Selected work" title="Systems I've built" />
-        <article className="reveal mt-12 overflow-hidden rounded-3xl bg-ink text-ink-foreground shadow-elegant">
-          <div className="grid gap-10 p-8 md:grid-cols-[1fr_1.1fr] md:p-12">
-            <div>
-              <span className="font-mono text-xs uppercase tracking-widest text-primary-glow">{featured.tag}</span>
-              <h3 className="mt-3 font-display text-3xl font-bold md:text-4xl">{featured.name}</h3>
-              <p className="mt-4 leading-relaxed text-ink-foreground/75">{featured.summary}</p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {featured.stack.map((s) => <span key={s} className="rounded-md border border-ink-foreground/15 px-2 py-1 font-mono text-[11px] text-ink-foreground/80">{s}</span>)}
+        {featured.visible && (
+          <article className="reveal mt-12 overflow-hidden rounded-3xl bg-ink text-ink-foreground shadow-elegant">
+            <div className="grid gap-10 p-8 md:grid-cols-[1fr_1.1fr] md:p-12">
+              <div>
+                <span className="font-mono text-xs uppercase tracking-widest text-primary-glow">{featured.tag}</span>
+                <h3 className="mt-3 font-display text-3xl font-bold md:text-4xl">{featured.name}</h3>
+                <p className="mt-4 leading-relaxed text-ink-foreground/75">{featured.summary}</p>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {featured.stack.map((s) => <span key={s} className="rounded-md border border-ink-foreground/15 px-2 py-1 font-mono text-[11px] text-ink-foreground/80">{s}</span>)}
+                </div>
+                <Link to="/projects/$slug" params={{ slug: featured.slug }} className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary-glow hover:underline">
+                  Read the case study <ArrowUpRight className="h-4 w-4" />
+                </Link>
               </div>
-              <Link to="/projects/$slug" params={{ slug: featured.slug }} className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary-glow hover:underline">
-                Read the case study <ArrowUpRight className="h-4 w-4" />
-              </Link>
+              <ol className="relative space-y-3">
+                {featured.steps.map((s) => (
+                  <li key={s.k} className="group flex gap-4 rounded-2xl border border-ink-foreground/10 bg-ink-foreground/[0.03] p-4 transition hover:border-primary-glow/50">
+                    <span className="font-mono text-sm text-primary-glow">{s.k}</span>
+                    <div>
+                      <div className="font-display font-semibold">{s.t}</div>
+                      <div className="text-sm text-ink-foreground/65">{s.d}</div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <ol className="relative space-y-3">
-              {featured.steps.map((s) => (
-                <li key={s.k} className="group flex gap-4 rounded-2xl border border-ink-foreground/10 bg-ink-foreground/[0.03] p-4 transition hover:border-primary-glow/50">
-                  <span className="font-mono text-sm text-primary-glow">{s.k}</span>
-                  <div>
-                    <div className="font-display font-semibold">{s.t}</div>
-                    <div className="text-sm text-ink-foreground/65">{s.d}</div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </article>
+          </article>
+        )}
 
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          {projects.map((p, i) => (
+        <div className={`${featured.visible ? "mt-6" : "mt-12"} grid gap-6 md:grid-cols-2`}>
+          {visibleProjects.map((p, i) => (
             <article key={p.name} className="reveal group flex flex-col rounded-3xl border border-border bg-card p-8 transition duration-300 hover:-translate-y-1 hover:shadow-elegant" style={{ transitionDelay: `${i * 60}ms` }}>
               <div className="flex items-start justify-between">
                 <span className="font-mono text-xs uppercase tracking-widest text-primary">{p.kind}</span>
-                <span className="font-mono text-xs text-muted-foreground">0{i + 2}</span>
+                <span className="font-mono text-xs text-muted-foreground">{String(i + (featured.visible ? 2 : 1)).padStart(2, "0")}</span>
               </div>
               <h3 className="mt-3 font-display text-2xl font-bold">{p.name}</h3>
               <p className="mt-3 flex-1 leading-relaxed text-muted-foreground">{p.summary}</p>

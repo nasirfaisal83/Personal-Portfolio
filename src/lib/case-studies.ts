@@ -1,7 +1,10 @@
 // Case-study pages at /projects/<slug>, restored from the old Next.js site
 // (src/content/projects.ts before the redesign). The keys are the URL slugs that
 // `featured` and `projects` in portfolio-data.ts link to. A project without
-// `github` is a private client project.
+// `github` is a private client project. Hiding a project is done with its
+// `visible` flag in portfolio-data.ts, not here.
+
+import { isProjectVisible } from "@/lib/portfolio-data";
 
 export interface CaseStudy {
   title: string;
@@ -302,6 +305,8 @@ export const caseStudies: Record<string, CaseStudy> = {
   },
 };
 
+/** A visible project's case study; a project hidden in portfolio-data.ts has none. */
 export function getCaseStudy(slug: string): CaseStudy | undefined {
+  if (!isProjectVisible(slug)) return undefined;
   return Object.hasOwn(caseStudies, slug) ? caseStudies[slug] : undefined;
 }
