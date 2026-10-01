@@ -60,7 +60,7 @@ function Index() {
           <div className="rise pb-16 md:pb-28">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
               <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" /><span className="relative h-2 w-2 rounded-full bg-primary" /></span>
-              Open to internships & junior roles
+              Open to internships
             </span>
             <h1 className="mt-6 font-display text-6xl font-bold leading-[0.95] tracking-tight md:text-8xl">
               Faisal<br />Nasir<span className="text-primary">.</span>
@@ -150,12 +150,12 @@ function Index() {
             <img src={side} alt="Faisal Nasir, arms crossed" loading="lazy" className="relative z-10 w-[80%] max-w-[400px]" />
           </div>
           <div className="reveal order-1 pb-24 md:order-2">
-            <SectionHead eyebrow="About" title="Engineer, teacher, community builder." />
+            <SectionHead eyebrow="About" title="Building software , Sharing knowledge , Bringing people together." />
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              I'm a Computer Science student at Ben-Gurion University of the Negev, graduating 2028. I like systems that hold up under real load — and I like explaining how they work.
+              I’m a Computer Science student at Ben-Gurion University of the Negev, graduating in 2028. I enjoy taking an idea from its first sketch to working software—and understanding the decisions that make it reliable.
             </p>
             <p className="mt-4 leading-relaxed text-muted-foreground">
-              Beyond coursework in systems programming (C, x86 assembly, Unix, ELF) and programming languages (functional TypeScript, Scheme), I follow a self-directed AI engineering roadmap and bootcamps in microservices/DevOps, agentic AI and deep learning.
+              My work spans a production booking platform for a paying business, event-driven microservices, and AI applications built around retrieval and autonomous agents. I’m especially interested in backend engineering and distributed systems: how services communicate, handle failures, and stay consistent.
             </p>
             <ol className="mt-10 space-y-4">
               {experience.map((e) => (
