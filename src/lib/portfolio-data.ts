@@ -18,7 +18,7 @@ export const featured = {
     { k: "04", t: "Approve", d: "Stylist confirms from the dashboard; reminders are scheduled." },
     { k: "05", t: "Self-manage", d: "Signed link lets the customer cancel or reschedule." },
   ],
-  caseStudy: "https://www.faisalnasir.dev/projects/salon/",
+  slug: "salon",
 };
 
 export const projects = [
@@ -29,7 +29,7 @@ export const projects = [
       "Order processing across 5 microservices using the Choreography Saga pattern. Services coordinate purely through Kafka events, with automatic compensation when a step fails.",
     stack: ["Spring Boot 3.4", "Kafka", "PostgreSQL", "Spring Cloud", "Docker"],
     github: "https://github.com/nasirfaisal83/Order-Saga",
-    caseStudy: "https://www.faisalnasir.dev/projects/order-saga/",
+    slug: "order-saga",
   },
   {
     name: "rag-document-qa",
@@ -38,7 +38,7 @@ export const projects = [
       "Upload documents, ask questions, get streamed answers grounded in the source. 3-strategy PDF extraction (PDFBox → Tesseract → GPT-4o Vision) and pgvector search with citations.",
     stack: ["Spring AI", "GPT-4o", "pgvector", "WebFlux", "Java 21"],
     github: "https://github.com/nasirfaisal83/rag-document-qa",
-    caseStudy: "https://www.faisalnasir.dev/projects/rag-document-qa/",
+    slug: "rag-document-qa",
   },
   {
     name: "tech-news-agent",
@@ -47,7 +47,7 @@ export const projects = [
       "An orchestrator runs a ReAct loop over five specialised agents to turn a topic into a fact-checked LinkedIn post, retrying automatically when confidence is too low.",
     stack: ["Spring AI", "gpt-4o-mini", "Tavily", "GitHub MCP", "Java 21"],
     github: "https://github.com/nasirfaisal83/tech-news-agent",
-    caseStudy: "https://www.faisalnasir.dev/projects/tech-news-agent/",
+    slug: "tech-news-agent",
   },
   {
     name: "Emergency-Alert-System",
@@ -56,7 +56,7 @@ export const projects = [
       "Pub-sub alert broadcasting over STOMP: a Java server switchable between thread-per-client and a non-blocking NIO reactor, paired with a C++11 Boost ASIO client.",
     stack: ["Java", "STOMP", "Java NIO", "C++11", "Boost ASIO"],
     github: "https://github.com/nasirfaisal83/Emergency-Alert-System",
-    caseStudy: "https://www.faisalnasir.dev/projects/emergency-alert-system/",
+    slug: "emergency-alert-system",
   },
 ];
 

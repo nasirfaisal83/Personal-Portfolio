@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { ArrowUpRight, Github, Linkedin, Mail, Copy, Check, MapPin, GraduationCap } from "lucide-react";
 import front from "@/assets/faisal-front.png";
 import side from "@/assets/faisal-side.png";
 import { links, featured, projects, experience, skills } from "@/lib/portfolio-data";
+import { useReveal } from "@/hooks/use-reveal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,18 +19,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
-
-function useReveal() {
-  useEffect(() => {
-    const els = document.querySelectorAll(".reveal");
-    const io = new IntersectionObserver(
-      (es) => es.forEach((e) => e.isIntersecting && e.target.classList.add("is-in")),
-      { threshold: 0.12 },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-}
 
 function Tag({ children }: { children: React.ReactNode }) {
   return <span className="rounded-md border border-border bg-secondary px-2 py-1 font-mono text-[11px] text-secondary-foreground">{children}</span>;
@@ -116,9 +105,9 @@ function Index() {
               <div className="mt-6 flex flex-wrap gap-2">
                 {featured.stack.map((s) => <span key={s} className="rounded-md border border-ink-foreground/15 px-2 py-1 font-mono text-[11px] text-ink-foreground/80">{s}</span>)}
               </div>
-              <a href={featured.caseStudy} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary-glow hover:underline">
+              <Link to="/projects/$slug" params={{ slug: featured.slug }} className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary-glow hover:underline">
                 Read the case study <ArrowUpRight className="h-4 w-4" />
-              </a>
+              </Link>
             </div>
             <ol className="relative space-y-3">
               {featured.steps.map((s) => (
@@ -146,7 +135,7 @@ function Index() {
               <div className="mt-5 flex flex-wrap gap-2">{p.stack.map((s) => <Tag key={s}>{s}</Tag>)}</div>
               <div className="mt-6 flex gap-5 border-t border-border pt-5 text-sm font-medium">
                 <a href={p.github} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-primary"><Github className="h-4 w-4" />Code</a>
-                <a href={p.caseStudy} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 hover:text-primary">Case study <ArrowUpRight className="h-4 w-4" /></a>
+                <Link to="/projects/$slug" params={{ slug: p.slug }} className="inline-flex items-center gap-1.5 hover:text-primary">Case study <ArrowUpRight className="h-4 w-4" /></Link>
               </div>
             </article>
           ))}
