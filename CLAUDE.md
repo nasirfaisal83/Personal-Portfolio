@@ -19,17 +19,18 @@ See [AGENTS.md](AGENTS.md). The `main` branch syncs both ways with the Lovable e
 npm i            # package-lock.json is what CI uses; bun.lock is kept for Lovable
 npm run dev      # vite dev server
 npm run build    # production build (client + SSR + nitro) into .output/
+npm run build:dev  # same build in development mode (unminified, easier to debug)
 npm run preview  # serve the production build
 npm run lint     # eslint, with prettier as an eslint rule
 npm run format   # prettier --write .
-npx tsc --noEmit # type-check (there is no typecheck script)
+npx tsc --noEmit # type-check (there is no typecheck script); passes cleanly, keep it that way
 ```
 
-There is no test runner and there are no tests.
+There is no test runner and there are no tests. `npx tsc --noEmit` plus eslint on the changed files is the whole verification loop.
 
 Things that look broken but are known state:
 
-- `npm run lint` fails on a clean checkout. The real errors are prettier formatting in `src/routes/index.tsx`, `src/routes/__root.tsx` and `src/lib/portfolio-data.ts`; the rest is noise from a stale, gitignored `.next/` directory if one exists locally (eslint only ignores `dist`, `.output`, `.vinxi`). Lint just the files you changed, e.g. `npx eslint src/routes/index.tsx`.
+- `npm run lint` fails on a clean checkout. The real errors are prettier formatting in `src/routes/index.tsx`, `src/routes/__root.tsx` and `src/lib/portfolio-data.ts`, while `src/components/ui/` only adds expected `react-refresh/only-export-components` warnings; the rest is noise from a stale, gitignored `.next/` directory if one exists locally (eslint only ignores `dist`, `.output`, `.vinxi`). Lint just the files you changed, e.g. `npx eslint src/routes/index.tsx`.
 - `.github/workflows/ci.yml` is left over from the previous Next.js version of the site. It calls npm scripts that no longer exist (`typecheck`, `test`, `content-check`, `bundle-check`, `test:e2e`) plus Playwright and Lighthouse CI, which are not installed, so it cannot pass as written.
 - `npm run build` writes `.output/` and `.wrangler/`, and neither is in `.gitignore` (which still lists Next.js paths). Don't commit them.
 
@@ -46,9 +47,9 @@ Things that look broken but are known state:
 
 **Routing.** File-based, under `src/routes/` (conventions in [src/routes/README.md](src/routes/README.md)). `src/routeTree.gen.ts` is generated — never edit it. [src/routes/__root.tsx](src/routes/__root.tsx) owns the HTML shell, the global `<head>` (fonts, favicon, default meta) and the React Query provider; the `QueryClient` is created per router in [src/router.tsx](src/router.tsx) and passed down as route context. This is not Next.js: no `src/pages/`, no `app/layout.tsx`, no `server-only` package (eslint blocks that import — use `*.server.ts`).
 
-**The site itself** is one route, [src/routes/index.tsx](src/routes/index.tsx), holding every section (nav, hero, projects, about, skills, contact) plus its small helper components. All copy and links come from [src/lib/portfolio-data.ts](src/lib/portfolio-data.ts) — change content there, not in the JSX. The case-study URLs in that file point at `/projects/<slug>/`, routes that existed in the old Next.js site and have no counterpart here, so they currently 404.
+**The site itself** is one route, [src/routes/index.tsx](src/routes/index.tsx), holding every section (nav, hero, projects, about, skills, contact) plus its small helper components. All copy and links come from [src/lib/portfolio-data.ts](src/lib/portfolio-data.ts) — change content there, not in the JSX. The two portrait photos are `src/assets/faisal-front.png` and `faisal-side.png`, imported through the `@/assets/` alias, not served from `public/`. The case-study URLs in that file point at `/projects/<slug>/`, routes that existed in the old Next.js site and have no counterpart here, so they currently 404.
 
-**Styling.** Tailwind v4 with no config file: the design tokens live in [src/styles.css](src/styles.css) as CSS variables in `:root` / `.dark`, registered through `@theme inline`. Colors must be `oklch`. Beyond the shadcn defaults the site adds `ink`, `primary-glow`, the `bg-grid` / `bg-hero-glow` utilities, and the `rise`, `float-*` and `reveal` animation classes (`reveal` is toggled by the `IntersectionObserver` in `index.tsx`). Fonts are DM Sans (body), Space Grotesk (`font-display`) and JetBrains Mono (`font-mono`), loaded from Google Fonts in `__root.tsx`.
+**Styling.** Tailwind v4 with no config file: the design tokens live in [src/styles.css](src/styles.css) as CSS variables in `:root` / `.dark`, registered through `@theme inline`. Colors must be `oklch`. Beyond the shadcn defaults the site adds `ink`, `primary-glow`, the `bg-grid` / `bg-hero-glow` utilities, and the `rise`, `float-*` and `reveal` animation classes (`reveal` elements start hidden and get `is-in` from the `useReveal` `IntersectionObserver` in `index.tsx`, so any new `.reveal` element must be on the page when that hook runs or it stays invisible; all of these are disabled under `prefers-reduced-motion`). Fonts are DM Sans (body), Space Grotesk (`font-display`) and JetBrains Mono (`font-mono`), loaded from Google Fonts in `__root.tsx`.
 
 **`src/components/ui/`** is the full shadcn/ui set (new-york style, config in [components.json](components.json)). The page uses none of it yet; treat it as a vendored library and add components with the shadcn CLI.
 
