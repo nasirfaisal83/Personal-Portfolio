@@ -1,5 +1,5 @@
 export const links = {
-  email: "nasirfaisal83@gmail.com",
+  email: "",
   github: "https://github.com/nasirfaisal83",
   linkedin: "https://www.linkedin.com/in/faisal-nasir-381a33131",
   site: "https://www.faisalnasir.dev",
